@@ -1,16 +1,20 @@
-# pawsome
+# Pawsome
 
-A new Flutter project.
+A AI powered cat health assistant application
 
-## Getting Started
+## How to Run this Code
+``` console
+flutter run
+```
+# UI/UX Designs
+https://www.figma.com/design/TncLwqt77LUKK07c5cEiVS/AI-Cat-Health-Assistant?node-id=0-1&t=uNpKk2rmyUmXV078-1
 
-This project is a starting point for a Flutter application.
+# Features
+1. It allows cat owners to create and update the profile of their cats.
+2. It provides them the feature to log their daily activities and maintains a care log.
+3. It calculates the health and stress level for cats based on their daily condition, appetite, bowel movement, urination, and weight.
+4. It includes an AI chat bot that allows users to add care records, and provides them with care tips based on the symptoms of cats.
+5. This app also keeps record of health checkups of cats including the doctor they visited and their last consultation date, along with their vaccination and allergies records.
+6. The app also finds nearest vets and recommends them to the owners. 
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
