@@ -359,7 +359,7 @@ class _HealthState extends State<Health> {
 
   Widget _buildBottomNav() {
     return BottomNavigationBar(
-      currentIndex: 0,
+      currentIndex: 2,
       type: BottomNavigationBarType.fixed,
       backgroundColor: const Color(0xFFB8B8E9),
       selectedItemColor: Colors.purple,

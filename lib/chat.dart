@@ -35,12 +35,13 @@ class _ChatState extends State<Chat> {
                     _buildChatMessage(),
 
                     const Spacer(),
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: Image.asset(
-                        "assets/images/catwalking.png",
-                        height: 300,
-                        fit: BoxFit.contain,
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.bottomRight,
+                        child: Image.asset(
+                          "assets/images/catwalking.png",
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ],
@@ -264,7 +265,7 @@ class _ChatState extends State<Chat> {
 
   Widget _buildBottomNav() {
     return BottomNavigationBar(
-      currentIndex: 0,
+      currentIndex: 3,
       type: BottomNavigationBarType.fixed,
       backgroundColor: const Color(0xFFB8B8E9),
       selectedItemColor: Colors.purple,

@@ -281,7 +281,7 @@ class _VetState extends State<Vet> {
 
   Widget _buildBottomNav() {
     return BottomNavigationBar(
-      currentIndex: 0,
+      currentIndex: 4,
       type: BottomNavigationBarType.fixed,
       backgroundColor: const Color(0xFFB8B8E9),
       selectedItemColor: Colors.purple,

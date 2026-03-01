@@ -290,7 +290,7 @@ class _LogsState extends State<Logs> {
 
   Widget _buildBottomNav() {
     return BottomNavigationBar(
-      currentIndex: 0,
+      currentIndex: 1,
       type: BottomNavigationBarType.fixed,
       backgroundColor: const Color(0xFFB8B8E9),
       selectedItemColor: Colors.purple,
