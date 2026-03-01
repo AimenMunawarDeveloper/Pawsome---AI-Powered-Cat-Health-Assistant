@@ -4,6 +4,7 @@ import "profile.dart";
 import "logs.dart";
 import "health.dart";
 import "vet.dart";
+import 'package:google_fonts/google_fonts.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -62,11 +63,11 @@ class _HomeState extends State<Home> {
             children: [
               Image.asset("assets/images/logo.png", height: 28, width: 28),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 "Pawsome",
-                style: TextStyle(
+                style: GoogleFonts.leckerliOne(
                   color: Colors.white,
-                  fontSize: 22,
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
               ),
