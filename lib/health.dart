@@ -2,39 +2,38 @@ import 'package:flutter/material.dart';
 import "chat.dart";
 import "profile.dart";
 import "logs.dart";
-import "health.dart";
+import "home.dart";
 import "vet.dart";
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class Health extends StatefulWidget {
+  const Health({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  State<Health> createState() => _HealthState();
 }
 
-class _HomeState extends State<Home> {
-  List<bool> dailyChecked = [false, false, false, false];
-  List<bool> extraChecked = [false, false, false, false];
-
+class _HealthState extends State<Health> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 208, 219),
+      backgroundColor: const Color(0xFFF5F5F5),
       drawer: _buildDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildAppBar(),
-              _buildHeaderSection(),
               const SizedBox(height: 20),
-              _buildDailyTasks(),
+              _buildHeader(),
               const SizedBox(height: 20),
-              _buildExtraActivities(),
+              _buildVetCard(),
+              const SizedBox(height: 15),
+              _buildVisitWeightCards(),
               const SizedBox(height: 20),
-              _buildRecommendedSection(),
+              _buildVaccinationSection(),
               const SizedBox(height: 20),
+              _buildAllergySection(),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -148,9 +147,9 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildHeaderSection() {
+  Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           const Expanded(
@@ -158,184 +157,201 @@ class _HomeState extends State<Home> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Plan Mimi’s day!",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  "Mimi’s Health Profile",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 10),
+                SizedBox(height: 8),
                 Text(
-                  "A cute way to plan your cat’s activities and make every day more purr-fect.",
-                  style: TextStyle(fontSize: 14),
+                  "View all the records related to your pet's health",
+                  style: TextStyle(color: Colors.black54),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          const CircleAvatar(
-            radius: 45,
-            backgroundImage: AssetImage("assets/images/catprofile.png"),
-          ),
+          Image.asset("assets/images/doctor.png", height: 200),
         ],
       ),
     );
   }
 
-  Widget _buildDailyTasks() {
-    return _buildTaskCard(
-      title: "Daily Healthy tasks",
-      items: const ["Brush teeth", "Eaten food", "Drank Water", "Played"],
-      checkedList: dailyChecked,
-      icon: Icons.check_circle_outline,
-      color: const Color(0xFFB8B8E9),
-    );
-  }
-
-  Widget _buildExtraActivities() {
-    return _buildTaskCard(
-      title: "Extra Activities",
-      items: const ["Go for walk", "Eaten Treats", "Bath", "Vaccination"],
-      checkedList: extraChecked,
-      icon: Icons.star_border,
-      color: const Color(0xFFE7B2BD),
-    );
-  }
-
-  Widget _buildTaskCard({
-    required String title,
-    required List<String> items,
-    required List<bool> checkedList,
-    required IconData icon,
-    required Color color,
-  }) {
+  Widget _buildVetCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFE7B2BD),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
+        child: const Column(
           children: [
+            Text(
+              "Mimi's Veterinarian: Dr. Hafsa Munawar",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: 8),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const CircleAvatar(
-                  backgroundColor: Colors.green,
-                  radius: 14,
-                  child: Icon(Icons.add, size: 16, color: Colors.white),
-                ),
+                Icon(Icons.phone, size: 18),
+                SizedBox(width: 6),
+                Text("+92 3637936633"),
               ],
             ),
-            const SizedBox(height: 10),
-
-            ...List.generate(items.length, (index) {
-              return Column(
-                children: [
-                  Row(
-                    children: [
-                      Icon(icon, color: color, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          items[index],
-                          style: TextStyle(
-                            decoration: checkedList[index]
-                                ? TextDecoration.lineThrough
-                                : TextDecoration.none,
-                          ),
-                        ),
-                      ),
-                      Checkbox(
-                        value: checkedList[index],
-                        onChanged: (value) {
-                          setState(() {
-                            checkedList[index] = value!;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  const Divider(),
-                ],
-              );
-            }),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRecommendedSection() {
+  Widget _buildVisitWeightCards() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: const Color(0xFFB8B8E9),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: const Column(
+                children: [
+                  Text("Last Visit"),
+                  SizedBox(height: 5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.calendar_today, size: 16),
+                      SizedBox(width: 6),
+                      Text("1/12/2025"),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: const Color(0xFFB8B8E9),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: const Column(
+                children: [
+                  Text("Last Weight"),
+                  SizedBox(height: 5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.monitor_weight, size: 16),
+                      SizedBox(width: 6),
+                      Text("2.5 kg"),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVaccinationSection() {
+    final vaccines = [
+      "Rabies Vaccination",
+      "Feline Viral Rhinotracheitis",
+      "Calicivirus",
+      "Panleukopenia",
+    ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Recommended Tips",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: const [
+              Text(
+                "Vaccination Records",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: Colors.green,
+                child: Icon(Icons.add, size: 16, color: Colors.white),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              _buildTipCard(
-                "assets/images/tip1.png",
-                "Top 10 Ways to Wash Cat",
-              ),
-              const SizedBox(width: 10),
-              _buildTipCard("assets/images/tip2.png", "Why is My Cat Sad?"),
-            ],
+          ...vaccines.map(
+            (vaccine) => Column(
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.vaccines, size: 18, color: Colors.black54),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(vaccine)),
+                    const Text(
+                      "1/12/2025",
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ],
+                ),
+                const Divider(),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTipCard(String image, String title) {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Image.asset(image, fit: BoxFit.cover),
+  Widget _buildAllergySection() {
+    final allergies = ["Fleas", "Eaten food", "Drank Water", "Played"];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: const [
+              Text(
+                "Mimi’s Allergies",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: Colors.green,
+                child: Icon(Icons.add, size: 16, color: Colors.white),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 10),
+          ...allergies.map(
+            (item) => Column(
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.radio_button_checked,
+                      size: 18,
+                      color: Color(0xFFB8B8E9),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(item)),
+                  ],
+                ),
+                const Divider(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,40 +1,34 @@
 import 'package:flutter/material.dart';
 import "chat.dart";
 import "profile.dart";
-import "logs.dart";
+import "home.dart";
 import "health.dart";
 import "vet.dart";
 
-class Home extends StatefulWidget {
-  const Home({super.key});
-
+class Logs extends StatefulWidget {
+  const Logs({super.key});
   @override
-  State<Home> createState() => _HomeState();
+  State<Logs> createState() => _LogsState();
 }
 
-class _HomeState extends State<Home> {
-  List<bool> dailyChecked = [false, false, false, false];
-  List<bool> extraChecked = [false, false, false, false];
-
+class _LogsState extends State<Logs> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 208, 219),
+      backgroundColor: const Color(0xFFF5F5F5),
       drawer: _buildDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildAppBar(),
-              _buildHeaderSection(),
               const SizedBox(height: 20),
-              _buildDailyTasks(),
+              _buildCalendarSection(),
               const SizedBox(height: 20),
-              _buildExtraActivities(),
+              _buildConcernCard(),
               const SizedBox(height: 20),
-              _buildRecommendedSection(),
-              const SizedBox(height: 20),
+              _buildCareLogsCard(),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -148,193 +142,146 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildHeaderSection() {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Plan Mimi’s day!",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  "A cute way to plan your cat’s activities and make every day more purr-fect.",
-                  style: TextStyle(fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          const CircleAvatar(
-            radius: 45,
-            backgroundImage: AssetImage("assets/images/catprofile.png"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDailyTasks() {
-    return _buildTaskCard(
-      title: "Daily Healthy tasks",
-      items: const ["Brush teeth", "Eaten food", "Drank Water", "Played"],
-      checkedList: dailyChecked,
-      icon: Icons.check_circle_outline,
-      color: const Color(0xFFB8B8E9),
-    );
-  }
-
-  Widget _buildExtraActivities() {
-    return _buildTaskCard(
-      title: "Extra Activities",
-      items: const ["Go for walk", "Eaten Treats", "Bath", "Vaccination"],
-      checkedList: extraChecked,
-      icon: Icons.star_border,
-      color: const Color(0xFFE7B2BD),
-    );
-  }
-
-  Widget _buildTaskCard({
-    required String title,
-    required List<String> items,
-    required List<bool> checkedList,
-    required IconData icon,
-    required Color color,
-  }) {
+  Widget _buildCalendarSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFE7B2BD),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const CircleAvatar(
-                  backgroundColor: Colors.green,
-                  radius: 14,
-                  child: Icon(Icons.add, size: 16, color: Colors.white),
-                ),
-              ],
+            const Text(
+              "2/2026",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(height: 10),
-
-            ...List.generate(items.length, (index) {
-              return Column(
-                children: [
-                  Row(
-                    children: [
-                      Icon(icon, color: color, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          items[index],
-                          style: TextStyle(
-                            decoration: checkedList[index]
-                                ? TextDecoration.lineThrough
-                                : TextDecoration.none,
-                          ),
-                        ),
-                      ),
-                      Checkbox(
-                        value: checkedList[index],
-                        onChanged: (value) {
-                          setState(() {
-                            checkedList[index] = value!;
-                          });
-                        },
-                      ),
-                    ],
+            const SizedBox(height: 15),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 28,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemBuilder: (context, index) {
+                return Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB8B8E9),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const Divider(),
-                ],
-              );
-            }),
+                  child: Text(
+                    "${index + 1}",
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRecommendedSection() {
+  Widget _buildConcernCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Recommended Tips",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _buildTipCard(
-                "assets/images/tip1.png",
-                "Top 10 Ways to Wash Cat",
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE48CA1),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              "😿 Concern",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
-              const SizedBox(width: 10),
-              _buildTipCard("assets/images/tip2.png", "Why is My Cat Sad?"),
-            ],
-          ),
-        ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              "Score: 50     Health: 5/10     Stress: 5/10",
+              style: TextStyle(color: Colors.white),
+            ),
+            SizedBox(height: 10),
+            Text("Health", style: TextStyle(color: Colors.white)),
+            SizedBox(height: 5),
+            LinearProgressIndicator(
+              value: 0.5,
+              backgroundColor: Colors.white,
+              color: Color(0xFFB8B8E9),
+            ),
+            SizedBox(height: 10),
+            Text("Stress", style: TextStyle(color: Colors.white)),
+            SizedBox(height: 5),
+            LinearProgressIndicator(
+              value: 0.5,
+              backgroundColor: Colors.white,
+              color: Color(0xFFB8B8E9),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTipCard(String image, String title) {
-    return Expanded(
+  Widget _buildCareLogsCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 3),
+          color: const Color(0xFFB8B8E9),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "📋 Care Logs",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 15),
+            Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "🐱 Mimi  7/10",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 10),
+                  Text("Condition: Good 🙂     Appetite: Great 😋"),
+                  SizedBox(height: 5),
+                  Text("Bowl: Diarrhea 💩     Urination: More than Usual 🚿"),
+                  SizedBox(height: 5),
+                  Text("Weight: 2.5 kg"),
+                ],
+              ),
             ),
           ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Image.asset(image, fit: BoxFit.cover),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

@@ -1,40 +1,35 @@
 import 'package:flutter/material.dart';
 import "chat.dart";
-import "profile.dart";
+import "home.dart";
 import "logs.dart";
 import "health.dart";
 import "vet.dart";
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class Profile extends StatefulWidget {
+  const Profile({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  State<Profile> createState() => _ProfileState();
 }
 
-class _HomeState extends State<Home> {
-  List<bool> dailyChecked = [false, false, false, false];
-  List<bool> extraChecked = [false, false, false, false];
-
+class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 208, 219),
+      backgroundColor: const Color(0xFFF5F5F5),
       drawer: _buildDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildAppBar(),
-              _buildHeaderSection(),
               const SizedBox(height: 20),
-              _buildDailyTasks(),
+              _buildProfileHeader(),
               const SizedBox(height: 20),
-              _buildExtraActivities(),
+              _buildPetDetails(),
               const SizedBox(height: 20),
-              _buildRecommendedSection(),
-              const SizedBox(height: 20),
+              _buildGuardianDetails(),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -148,9 +143,9 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildHeaderSection() {
+  Widget _buildProfileHeader() {
     return Padding(
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           const Expanded(
@@ -158,18 +153,17 @@ class _HomeState extends State<Home> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Plan Mimi’s day!",
+                  "Mimi’s Profile",
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 10),
+                SizedBox(height: 8),
                 Text(
-                  "A cute way to plan your cat’s activities and make every day more purr-fect.",
-                  style: TextStyle(fontSize: 14),
+                  "Easily change your pet's information to keep their profile up to date.",
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
           const CircleAvatar(
             radius: 45,
             backgroundImage: AssetImage("assets/images/catprofile.png"),
@@ -179,40 +173,50 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildDailyTasks() {
-    return _buildTaskCard(
-      title: "Daily Healthy tasks",
-      items: const ["Brush teeth", "Eaten food", "Drank Water", "Played"],
-      checkedList: dailyChecked,
-      icon: Icons.check_circle_outline,
-      color: const Color(0xFFB8B8E9),
+  Widget _buildPetDetails() {
+    return _buildCard(
+      title: "Mimi’s Details",
+      fields: const {
+        "Name": "Mimi",
+        "Breed": "Munchkin",
+        "Age": "5 months",
+        "Gender": "Female",
+        "Weight": "2.5 kg",
+      },
     );
   }
 
-  Widget _buildExtraActivities() {
-    return _buildTaskCard(
-      title: "Extra Activities",
-      items: const ["Go for walk", "Eaten Treats", "Bath", "Vaccination"],
-      checkedList: extraChecked,
-      icon: Icons.star_border,
-      color: const Color(0xFFE7B2BD),
+  Widget _buildGuardianDetails() {
+    return _buildCard(
+      title: "Guardian Details",
+      fields: const {
+        "Name": "Hadia Aimen",
+        "Email": "emailtest@gmail.com",
+        "Contact no.": "0111-222-3333",
+        "Address": "NUST",
+        "Emergency no.": "0111-333-4444",
+      },
     );
   }
 
-  Widget _buildTaskCard({
+  Widget _buildCard({
     required String title,
-    required List<String> items,
-    required List<bool> checkedList,
-    required IconData icon,
-    required Color color,
+    required Map<String, String> fields,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -226,115 +230,46 @@ class _HomeState extends State<Home> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const CircleAvatar(
-                  backgroundColor: Colors.green,
-                  radius: 14,
-                  child: Icon(Icons.add, size: 16, color: Colors.white),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB8B8E9),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    "Edit",
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-
-            ...List.generate(items.length, (index) {
+            const SizedBox(height: 15),
+            ...fields.entries.map((entry) {
               return Column(
                 children: [
                   Row(
                     children: [
-                      Icon(icon, color: color, size: 20),
-                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          items[index],
-                          style: TextStyle(
-                            decoration: checkedList[index]
-                                ? TextDecoration.lineThrough
-                                : TextDecoration.none,
-                          ),
+                          entry.key,
+                          style: const TextStyle(color: Colors.black54),
                         ),
                       ),
-                      Checkbox(
-                        value: checkedList[index],
-                        onChanged: (value) {
-                          setState(() {
-                            checkedList[index] = value!;
-                          });
-                        },
+                      Text(
+                        entry.value,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
                   const Divider(),
                 ],
               );
-            }),
+            }).toList(),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecommendedSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Recommended Tips",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _buildTipCard(
-                "assets/images/tip1.png",
-                "Top 10 Ways to Wash Cat",
-              ),
-              const SizedBox(width: 10),
-              _buildTipCard("assets/images/tip2.png", "Why is My Cat Sad?"),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTipCard(String image, String title) {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Image.asset(image, fit: BoxFit.cover),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
