@@ -171,9 +171,95 @@ class _HomeState extends State<Home> {
             ),
           ),
           const SizedBox(width: 10),
-          const CircleAvatar(
-            radius: 45,
-            backgroundImage: AssetImage("assets/images/catprofile.png"),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const Profile(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                ),
+              );
+            },
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const Profile(),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                          const begin = 0.0;
+                          const end = 1.0;
+                          const curve = Curves.easeInOutCubic;
+
+                          var fadeAnimation = Tween(
+                            begin: begin,
+                            end: end,
+                          ).chain(CurveTween(curve: curve)).animate(animation);
+
+                          var scaleAnimation = Tween(
+                            begin: 0.8,
+                            end: 1.0,
+                          ).chain(CurveTween(curve: curve)).animate(animation);
+
+                          return FadeTransition(
+                            opacity: fadeAnimation,
+                            child: ScaleTransition(
+                              scale: scaleAnimation,
+                              child: child,
+                            ),
+                          );
+                        },
+                    transitionDuration: const Duration(milliseconds: 600),
+                  ),
+                );
+              },
+              child: Hero(
+                tag: 'cat_profile',
+                flightShuttleBuilder:
+                    (
+                      flightContext,
+                      animation,
+                      direction,
+                      fromContext,
+                      toContext,
+                    ) {
+                      return Transform.scale(
+                        scale: animation.value * 1.2,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.purple.withOpacity(
+                                  0.5 * (1 - animation.value),
+                                ),
+                                blurRadius: 20 * (1 - animation.value),
+                                spreadRadius: 5 * (1 - animation.value),
+                              ),
+                            ],
+                          ),
+                          child: const CircleAvatar(
+                            radius: 45,
+                            backgroundImage: AssetImage(
+                              "assets/images/catprofile.png",
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                child: const CircleAvatar(
+                  radius: 45,
+                  backgroundImage: AssetImage("assets/images/catprofile.png"),
+                ),
+              ),
+            ),
           ),
         ],
       ),

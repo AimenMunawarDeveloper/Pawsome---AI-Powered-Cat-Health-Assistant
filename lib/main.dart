@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pawsome/loading.dart';
 import 'signup.dart';
 import 'home.dart';
 
@@ -145,7 +146,7 @@ class MyApp extends StatelessWidget {
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const Home()),
+                        MaterialPageRoute(builder: (context) => const LoadingScreen()),
                       );
                     },
                     child: Container(

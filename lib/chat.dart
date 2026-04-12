@@ -13,10 +13,47 @@ class Chat extends StatefulWidget {
   State<Chat> createState() => _ChatState();
 }
 
-class _ChatState extends State<Chat> {
+class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
   int _currentIndex = 3;
 
+  bool _isBotTyping = false;
+  final TextEditingController _messageController = TextEditingController();
+  List<ChatMessage> _messages = [];
+  late AnimationController _controller;
+  late Animation<Offset> _animation;
+
   @override
+  void initState() {
+    super.initState();
+    _messages.add(
+      ChatMessage(
+        text:
+            "Hello! I am Dr. Meow.\n"
+            "Feel free to ask me anything about your cat health.\n"
+            "Send me photo and I will analyze it.",
+        isUser: false,
+      ),
+    );
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    );
+
+    _animation = Tween<Offset>(
+      begin: const Offset(-1, 0),
+      end: const Offset(1, 0),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
+
+    _controller.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,31 +67,193 @@ class _ChatState extends State<Chat> {
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildChatMessage(),
-
-                    const Spacer(),
                     Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomRight,
-                        child: Image.asset(
-                          "assets/images/catwalking.png",
-                          fit: BoxFit.contain,
-                        ),
+                      child: ListView.builder(
+                        itemCount: _messages.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == _messages.length) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 20),
+                              child: SizedBox(
+                                height: 150,
+                                child: SlideTransition(
+                                  position: _animation,
+                                  child: Image.asset(
+                                    "assets/images/catwalking.png",
+                                    height: 150,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return _buildChatMessage(_messages[index]);
+                        },
                       ),
                     ),
+
+                    AnimatedOpacity(
+                      opacity: _isBotTyping ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: _buildTypingIndicator(),
+                    ),
+
+                    const SizedBox(height: 10),
                   ],
                 ),
               ),
             ),
 
-            _buildBottomInputSection(),
+            AnimatedOpacity(
+              opacity: _isBotTyping ? 0.5 : 1.0,
+              duration: const Duration(milliseconds: 300),
+              child: _buildBottomInputSection(),
+            ),
           ],
         ),
       ),
       bottomNavigationBar: _buildBottomNav(),
     );
+  }
+
+  Widget _buildTypingIndicator() {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 20,
+          child: ClipOval(
+            child: Image.asset(
+              "assets/images/catdoctor.png",
+              fit: BoxFit.cover,
+              width: 30,
+              height: 40,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colors.black12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDot(),
+              const SizedBox(width: 4),
+              _buildDot(),
+              const SizedBox(width: 4),
+              _buildDot(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDot() {
+    return AnimatedOpacity(
+      opacity: _isBotTyping ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 300),
+      child: Container(
+        width: 8,
+        height: 8,
+        decoration: const BoxDecoration(
+          color: Color(0xFFB8B8E9),
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatMessage(ChatMessage message) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: message.isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
+        children: [
+          if (!message.isUser)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: CircleAvatar(
+                radius: 20,
+                child: ClipOval(
+                  child: Image.asset(
+                    "assets/images/catdoctor.png",
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: message.isUser ? const Color(0xFFE7B2BD) : Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: Text(message.text),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomInputSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.black12)),
+      ),
+      child: Row(
+        children: [
+          IconButton(icon: const Icon(Icons.camera_alt), onPressed: () {}),
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              decoration: const InputDecoration(hintText: "Type a message..."),
+            ),
+          ),
+          IconButton(icon: const Icon(Icons.send), onPressed: _sendMessage),
+        ],
+      ),
+    );
+  }
+
+  void _sendMessage() {
+    if (_messageController.text.trim().isEmpty) return;
+
+    setState(() {
+      _messages.add(ChatMessage(text: _messageController.text, isUser: true));
+      _messageController.clear();
+      _isBotTyping = true;
+    });
+
+    Future.delayed(const Duration(seconds: 2), () {
+      setState(() {
+        _isBotTyping = false;
+        _messages.add(ChatMessage(text: _getBotResponse(), isUser: false));
+      });
+    });
+  }
+
+  String _getBotResponse() {
+    List<String> responses = [
+      "That's great! Keep taking care of your cat 🐱",
+      "Is there anything else you'd like to know?",
+      "Remember vet checkups!",
+      "Ensure your cat drinks water!",
+      "Play with your cat daily!",
+    ];
+    return responses[DateTime.now().millisecond % responses.length];
   }
 
   Widget _buildAppBar() {
@@ -74,14 +273,13 @@ class _ChatState extends State<Chat> {
           ),
           Row(
             children: [
-              Image.asset("assets/images/logo.png", height: 28, width: 28),
+              Image.asset("assets/images/logo.png", height: 28),
               const SizedBox(width: 8),
               Text(
                 "Pawsome",
                 style: GoogleFonts.leckerliOne(
                   color: Colors.white,
                   fontSize: 32,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -162,107 +360,6 @@ class _ChatState extends State<Chat> {
     );
   }
 
-  Widget _buildChatMessage() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: CircleAvatar(
-            radius: 25,
-            child: ClipOval(
-              child: Image.asset(
-                "assets/images/catdoctor.png",
-                fit: BoxFit.cover,
-                width: 30,
-                height: 40,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Flexible(
-          child: Container(
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.black12),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      "Dr.Meow",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      "ChatWithAI",
-                      style: TextStyle(fontSize: 12, color: Colors.pink),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Text(
-                  "Hello! I am Dr. Meow.\n"
-                  "Feel free to ask me anything about your cat health.\n"
-                  "Send me photo and I will analyze it.",
-                  style: TextStyle(fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomInputSection() {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.black12)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.camera_alt, color: Colors.black54),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F0F0),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const TextField(
-                  decoration: InputDecoration(
-                    hintText: "Type a message.....",
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            CircleAvatar(
-              backgroundColor: const Color(0xFFE7B2BD),
-              child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.black),
-                onPressed: () {},
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildBottomNav() {
     return BottomNavigationBar(
       currentIndex: 3,
@@ -318,4 +415,11 @@ class _ChatState extends State<Chat> {
       ],
     );
   }
+}
+
+class ChatMessage {
+  final String text;
+  final bool isUser;
+
+  ChatMessage({required this.text, required this.isUser});
 }

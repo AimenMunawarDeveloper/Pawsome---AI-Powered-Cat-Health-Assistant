@@ -165,9 +165,13 @@ class _ProfileState extends State<Profile> {
               ],
             ),
           ),
-          const CircleAvatar(
-            radius: 45,
-            backgroundImage: AssetImage("assets/images/catprofile.png"),
+          Hero(
+            // hero animation
+            tag: 'cat_profile',
+            child: const CircleAvatar(
+              radius: 45,
+              backgroundImage: AssetImage("assets/images/catprofile.png"),
+            ),
           ),
         ],
       ),
