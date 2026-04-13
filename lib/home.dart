@@ -13,9 +13,74 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   List<bool> dailyChecked = [false, false, false, false];
   List<bool> extraChecked = [false, false, false, false];
+  bool animateText = false;
+  final GlobalKey _tipsKey = GlobalKey();
+  bool hasAnimated = false;
+  late AnimationController _controller;
+  late Animation<Offset> _slideAnimation;
+  final ScrollController _scrollController = ScrollController();
+  Widget _animatedAddButton(VoidCallback onTap) {
+    return _AddButton(onTap: onTap);
+  }
+
+  Route _createRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+
+        final tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: Curves.easeOut));
+
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(milliseconds: 300), () {
+      setState(() {
+        animateText = true;
+      });
+    });
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(1, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _scrollController.addListener(() {
+      if (hasAnimated) return;
+
+      final context = _tipsKey.currentContext;
+      if (context != null) {
+        final box = context.findRenderObject() as RenderBox;
+        final position = box.localToGlobal(Offset.zero);
+
+        final screenHeight = MediaQuery.of(context).size.height;
+
+        if (position.dy < screenHeight * 0.8) {
+          hasAnimated = true;
+          _controller.forward(from: 0);
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +89,7 @@ class _HomeState extends State<Home> {
       drawer: _buildDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
+          controller: _scrollController,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -88,44 +154,32 @@ class _HomeState extends State<Home> {
           child: Column(
             children: [
               _drawerItem(Icons.home, "Home", () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Home()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Home()));
               }),
 
               _drawerItem(Icons.list_alt, "Logs", () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Logs()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Logs()));
               }),
 
               _drawerItem(Icons.favorite, "Health", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Health()),
+                  _createRoute(const Health()),
                 );
               }),
 
               _drawerItem(Icons.auto_awesome, "AI Chat", () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Chat()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Chat()));
               }),
 
               _drawerItem(Icons.location_on, "Vet Locator", () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Vet()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Vet()));
               }),
 
               _drawerItem(Icons.person, "Profile", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Profile()),
+                  _createRoute(const Profile()),
                 );
               }),
             ],
@@ -154,7 +208,7 @@ class _HomeState extends State<Home> {
       padding: const EdgeInsets.all(20.0),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -162,8 +216,8 @@ class _HomeState extends State<Home> {
                   "Plan Mimi’s day!",
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 10),
-                Text(
+                const SizedBox(height: 10),
+                const Text(
                   "A cute way to plan your cat’s activities and make every day more purr-fect.",
                   style: TextStyle(fontSize: 14),
                 ),
@@ -313,43 +367,69 @@ class _HomeState extends State<Home> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const CircleAvatar(
-                  backgroundColor: Colors.green,
-                  radius: 14,
-                  child: Icon(Icons.add, size: 16, color: Colors.white),
-                ),
+                _animatedAddButton(() {}),
               ],
             ),
-            const SizedBox(height: 10),
 
+            const SizedBox(height: 10),
             ...List.generate(items.length, (index) {
+              final isChecked = checkedList[index];
+
               return Column(
                 children: [
-                  Row(
-                    children: [
-                      Icon(icon, color: color, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          items[index],
-                          style: TextStyle(
-                            decoration: checkedList[index]
-                                ? TextDecoration.lineThrough
-                                : TextDecoration.none,
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: isChecked ? 10 : 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isChecked
+                          ? color.withOpacity(0.20)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        AnimatedScale(
+                          duration: const Duration(milliseconds: 200),
+                          scale: isChecked ? 1.1 : 1.0,
+                          child: Icon(icon, color: color, size: 20),
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        Expanded(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 300),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isChecked ? Colors.grey : Colors.black,
+                              decoration: isChecked
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                            ),
+                            child: Text(items[index]),
                           ),
                         ),
-                      ),
-                      Checkbox(
-                        value: checkedList[index],
-                        onChanged: (value) {
-                          setState(() {
-                            checkedList[index] = value!;
-                          });
-                        },
-                      ),
-                    ],
+                        AnimatedScale(
+                          duration: const Duration(milliseconds: 200),
+                          scale: isChecked ? 1.1 : 1.0,
+                          child: Checkbox(
+                            value: isChecked,
+                            onChanged: (value) {
+                              setState(() {
+                                checkedList[index] = value!;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const Divider(),
+
+                  const Divider(height: 1),
                 ],
               );
             }),
@@ -360,7 +440,15 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildRecommendedSection() {
+    final tips = [
+      {"img": "assets/images/tip1.png", "title": "Top 10 Ways to Wash Cat"},
+      {"img": "assets/images/tip2.png", "title": "Why is My Cat Sad?"},
+      {"img": "assets/images/tip1.png", "title": "Healthy Cat Diet"},
+      {"img": "assets/images/tip2.png", "title": "Cat Sleep Guide"},
+    ];
+
     return Padding(
+      key: _tipsKey,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,15 +458,45 @@ class _HomeState extends State<Home> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              _buildTipCard(
-                "assets/images/tip1.png",
-                "Top 10 Ways to Wash Cat",
-              ),
-              const SizedBox(width: 10),
-              _buildTipCard("assets/images/tip2.png", "Why is My Cat Sad?"),
-            ],
+
+          SizedBox(
+            height: 180,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: tips.length,
+              itemBuilder: (context, index) {
+                final start = index * 0.2;
+                final end = start + 0.6;
+
+                final curvedAnimation = CurvedAnimation(
+                  parent: _controller,
+                  curve: Interval(
+                    start,
+                    end > 1 ? 1 : end,
+                    curve: Curves.easeOut,
+                  ),
+                );
+
+                final animation = Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(curvedAnimation);
+
+                return SlideTransition(
+                  position: animation,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: SizedBox(
+                      width: 160,
+                      child: _buildTipCard(
+                        tips[index]["img"]!,
+                        tips[index]["title"]!,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -386,42 +504,36 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildTipCard(String image, String title) {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 3),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Image.asset(image, fit: BoxFit.cover),
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Image.asset(image, fit: BoxFit.cover),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -436,40 +548,22 @@ class _HomeState extends State<Home> {
       unselectedItemColor: Colors.white,
       onTap: (index) {
         if (index == 0) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const Home()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Home()));
         }
         if (index == 1) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const Logs()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Logs()));
         }
         if (index == 2) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const Health()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Health()));
         }
         if (index == 3) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const Chat()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Chat()));
         }
         if (index == 4) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const Vet()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Vet()));
         }
         if (index == 5) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const Profile()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Profile()));
         }
       },
       items: const [
@@ -480,6 +574,46 @@ class _HomeState extends State<Home> {
         BottomNavigationBarItem(icon: Icon(Icons.location_city), label: "Vet"),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
       ],
+    );
+  }
+}
+
+class _AddButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _AddButton({required this.onTap});
+
+  @override
+  State<_AddButton> createState() => _AddButtonState();
+}
+
+class _AddButtonState extends State<_AddButton> {
+  double scale = 1.0;
+
+  void _animateTap() async {
+    setState(() => scale = 0.7);
+
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    setState(() => scale = 1.0);
+
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _animateTap,
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        child: const CircleAvatar(
+          backgroundColor: Colors.green,
+          radius: 14,
+          child: Icon(Icons.add, size: 16, color: Colors.white),
+        ),
+      ),
     );
   }
 }

@@ -14,6 +14,23 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+  Route _createRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+
+        final tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: Curves.easeOut));
+
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,42 +102,42 @@ class _ProfileState extends State<Profile> {
               _drawerItem(Icons.home, "Home", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Home()),
+                  _createRoute(const Home()),
                 );
               }),
 
               _drawerItem(Icons.list_alt, "Logs", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Logs()),
+                  _createRoute(const Logs()),
                 );
               }),
 
               _drawerItem(Icons.favorite, "Health", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Health()),
+                  _createRoute(const Health()),
                 );
               }),
 
               _drawerItem(Icons.auto_awesome, "AI Chat", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Chat()),
+                  _createRoute(const Chat()),
                 );
               }),
 
               _drawerItem(Icons.location_on, "Vet Locator", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Vet()),
+                  _createRoute(const Vet()),
                 );
               }),
 
               _drawerItem(Icons.person, "Profile", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Profile()),
+                  _createRoute(const Profile()),
                 );
               }),
             ],
@@ -291,37 +308,37 @@ class _ProfileState extends State<Profile> {
         if (index == 0) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Home()),
+            _createRoute(const Home()),
           );
         }
         if (index == 1) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Logs()),
+            _createRoute(const Logs()),
           );
         }
         if (index == 2) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Health()),
+            _createRoute(const Health()),
           );
         }
         if (index == 3) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Chat()),
+            _createRoute(const Chat()),
           );
         }
         if (index == 4) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Vet()),
+            _createRoute(const Vet()),
           );
         }
         if (index == 5) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Profile()),
+            _createRoute(const Profile()),
           );
         }
       },

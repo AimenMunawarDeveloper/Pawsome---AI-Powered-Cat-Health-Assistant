@@ -14,6 +14,26 @@ class Health extends StatefulWidget {
 }
 
 class _HealthState extends State<Health> {
+  Widget _animatedAddButton(VoidCallback onTap) {
+    return _AddButton(onTap: onTap);
+  }
+Route _createRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+
+        final tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: Curves.easeOut));
+
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,42 +109,42 @@ class _HealthState extends State<Health> {
               _drawerItem(Icons.home, "Home", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Home()),
+                  _createRoute(const Home()),
                 );
               }),
 
               _drawerItem(Icons.list_alt, "Logs", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Logs()),
+                  _createRoute(const Logs()),
                 );
               }),
 
               _drawerItem(Icons.favorite, "Health", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Health()),
+                  _createRoute(const Health()),
                 );
               }),
 
               _drawerItem(Icons.auto_awesome, "AI Chat", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Chat()),
+                  _createRoute(const Chat()),
                 );
               }),
 
               _drawerItem(Icons.location_on, "Vet Locator", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Vet()),
+                  _createRoute(const Vet()),
                 );
               }),
 
               _drawerItem(Icons.person, "Profile", () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const Profile()),
+                  _createRoute(const Profile()),
                 );
               }),
             ],
@@ -276,16 +296,12 @@ class _HealthState extends State<Health> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 "Vaccination Records",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: Colors.green,
-                child: Icon(Icons.add, size: 16, color: Colors.white),
-              ),
+               _animatedAddButton(() {}),
             ],
           ),
           const SizedBox(height: 10),
@@ -321,16 +337,12 @@ class _HealthState extends State<Health> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 "Mimi’s Allergies",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: Colors.green,
-                child: Icon(Icons.add, size: 16, color: Colors.white),
-              ),
+              _animatedAddButton(() {}),
             ],
           ),
           const SizedBox(height: 10),
@@ -368,37 +380,37 @@ class _HealthState extends State<Health> {
         if (index == 0) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Home()),
+            _createRoute(Home()),
           );
         }
         if (index == 1) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Logs()),
+            _createRoute(const Logs()),
           );
         }
         if (index == 2) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Health()),
+            _createRoute(const Health()),
           );
         }
         if (index == 3) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Chat()),
+            _createRoute(const Chat()),
           );
         }
         if (index == 4) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Vet()),
+            _createRoute(const Vet()),
           );
         }
         if (index == 5) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Profile()),
+            _createRoute(const Profile()),
           );
         }
       },
@@ -410,6 +422,46 @@ class _HealthState extends State<Health> {
         BottomNavigationBarItem(icon: Icon(Icons.location_city), label: "Vet"),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
       ],
+    );
+  }
+}
+
+class _AddButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _AddButton({required this.onTap});
+
+  @override
+  State<_AddButton> createState() => _AddButtonState();
+}
+
+class _AddButtonState extends State<_AddButton> {
+  double scale = 1.0;
+
+  void _animateTap() async {
+    setState(() => scale = 0.7);
+
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    setState(() => scale = 1.0);
+
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _animateTap,
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        child: const CircleAvatar(
+          backgroundColor: Colors.green,
+          radius: 14,
+          child: Icon(Icons.add, size: 16, color: Colors.white),
+        ),
+      ),
     );
   }
 }
