@@ -31,6 +31,7 @@ class _ProfileState extends State<Profile> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,17 +101,11 @@ class _ProfileState extends State<Profile> {
           child: Column(
             children: [
               _drawerItem(Icons.home, "Home", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Home()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Home()));
               }),
 
               _drawerItem(Icons.list_alt, "Logs", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Logs()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Logs()));
               }),
 
               _drawerItem(Icons.favorite, "Health", () {
@@ -121,17 +116,11 @@ class _ProfileState extends State<Profile> {
               }),
 
               _drawerItem(Icons.auto_awesome, "AI Chat", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Chat()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Chat()));
               }),
 
               _drawerItem(Icons.location_on, "Vet Locator", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Vet()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Vet()));
               }),
 
               _drawerItem(Icons.person, "Profile", () {
@@ -252,20 +241,7 @@ class _ProfileState extends State<Profile> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFB8B8E9),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    "Edit",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
+                _EditButton(onTap: () {}),
               ],
             ),
             const SizedBox(height: 15),
@@ -306,40 +282,22 @@ class _ProfileState extends State<Profile> {
       unselectedItemColor: Colors.white,
       onTap: (index) {
         if (index == 0) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Home()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Home()));
         }
         if (index == 1) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Logs()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Logs()));
         }
         if (index == 2) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Health()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Health()));
         }
         if (index == 3) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Chat()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Chat()));
         }
         if (index == 4) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Vet()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Vet()));
         }
         if (index == 5) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Profile()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Profile()));
         }
       },
       items: const [
@@ -350,6 +308,49 @@ class _ProfileState extends State<Profile> {
         BottomNavigationBarItem(icon: Icon(Icons.location_city), label: "Vet"),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
       ],
+    );
+  }
+}
+
+class _EditButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _EditButton({required this.onTap});
+
+  @override
+  State<_EditButton> createState() => _EditButtonState();
+}
+
+class _EditButtonState extends State<_EditButton> {
+  double scale = 1.0;
+
+  void _animateTap() async {
+    setState(() => scale = 0.85);
+
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    setState(() => scale = 1.0);
+
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _animateTap,
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFB8B8E9),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Text("Edit", style: TextStyle(color: Colors.white)),
+        ),
+      ),
     );
   }
 }
