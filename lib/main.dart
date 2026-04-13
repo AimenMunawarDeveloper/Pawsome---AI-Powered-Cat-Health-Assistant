@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import "login.dart";
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(const MyApp());
@@ -78,12 +79,11 @@ class _SplashScreenState extends State<SplashScreen>
             children: [
               Image.asset("assets/images/logo.png", height: 120),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 "Pawsome",
-                style: TextStyle(
+                style: GoogleFonts.leckerliOne(
+                  color: Colors.black,
                   fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
                 ),
               ),
             ],
