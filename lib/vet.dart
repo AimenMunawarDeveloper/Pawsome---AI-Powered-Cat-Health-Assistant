@@ -31,6 +31,7 @@ class _VetState extends State<Vet> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,9 +46,15 @@ class _VetState extends State<Vet> {
                 children: [
                   // Map Image
                   Positioned.fill(
-                    child: Image.asset(
-                      "assets/images/map.png",
-                      fit: BoxFit.cover,
+                    child: InteractiveViewer(
+                      panEnabled: true,
+                      scaleEnabled: true,
+                      minScale: 1.0,
+                      maxScale: 4.0,
+                      child: Image.asset(
+                        "assets/images/map.png",
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   Positioned(
@@ -130,17 +137,11 @@ class _VetState extends State<Vet> {
           child: Column(
             children: [
               _drawerItem(Icons.home, "Home", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Home()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Home()));
               }),
 
               _drawerItem(Icons.list_alt, "Logs", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Logs()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Logs()));
               }),
 
               _drawerItem(Icons.favorite, "Health", () {
@@ -151,17 +152,11 @@ class _VetState extends State<Vet> {
               }),
 
               _drawerItem(Icons.auto_awesome, "AI Chat", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Chat()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Chat()));
               }),
 
               _drawerItem(Icons.location_on, "Vet Locator", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Vet()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Vet()));
               }),
 
               _drawerItem(Icons.person, "Profile", () {
@@ -286,12 +281,7 @@ class _VetState extends State<Vet> {
             ],
           ),
         ),
-        Column(
-          children: const [
-            Icon(Icons.phone, color: Colors.blue),
-            Text("Call", style: TextStyle(color: Colors.blue)),
-          ],
-        ),
+        Column(children: const [HoverCallButton()]),
       ],
     );
   }
@@ -305,40 +295,22 @@ class _VetState extends State<Vet> {
       unselectedItemColor: Colors.white,
       onTap: (index) {
         if (index == 0) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Home()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Home()));
         }
         if (index == 1) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Logs()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Logs()));
         }
         if (index == 2) {
-          Navigator.pushReplacement(
-            context,
-           _createRoute(const Health()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Health()));
         }
         if (index == 3) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Chat()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Chat()));
         }
         if (index == 4) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Vet()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Vet()));
         }
         if (index == 5) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Profile()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Profile()));
         }
       },
       items: const [
@@ -349,6 +321,54 @@ class _VetState extends State<Vet> {
         BottomNavigationBarItem(icon: Icon(Icons.location_city), label: "Vet"),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
       ],
+    );
+  }
+}
+
+class HoverCallButton extends StatefulWidget {
+  const HoverCallButton({super.key});
+
+  @override
+  State<HoverCallButton> createState() => _HoverCallButtonState();
+}
+
+class _HoverCallButtonState extends State<HoverCallButton> {
+  bool isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isHovered ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: isHovered ? 1.0 : 0.7,
+              child: Icon(
+                Icons.phone,
+                color: isHovered ? Colors.red : Colors.blue,
+              ),
+            ),
+            const SizedBox(width: 5),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: TextStyle(
+                color: isHovered ? Colors.red : Colors.blue,
+                fontWeight: FontWeight.w500,
+              ),
+              child: const Text("Call"),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

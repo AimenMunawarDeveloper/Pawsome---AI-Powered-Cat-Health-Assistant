@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
+import 'package:pawsome/loading.dart';
+import 'signup.dart';
+import 'home.dart';
 
-class SignUpPage extends StatelessWidget {
-  const SignUpPage({super.key});
+class Login extends StatelessWidget {
+  const Login({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,6 @@ class SignUpPage extends StatelessWidget {
         ),
         backgroundColor: const Color(0xFF929292),
       ),
-
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -43,8 +44,6 @@ class SignUpPage extends StatelessWidget {
           children: [
             Image.asset("assets/images/logo.png"),
             const SizedBox(height: 30),
-
-            // CARD (same style as login)
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 25),
               padding: const EdgeInsets.all(25),
@@ -55,69 +54,45 @@ class SignUpPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // HEADER ROW
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      const Text(
+                        "Login",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pop(context); // go back to login
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SignUpPage(),
+                            ),
+                          );
                         },
                         child: const Text(
-                          "Login",
+                          "Sign Up",
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-
-                      const Text(
-                        "Sign Up",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                     ],
                   ),
-
                   const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        right: 10,
-                      ), // 👈 adjust this
-                      child: Container(
-                        height: 5,
-                        width: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
+                  Container(
+                    height: 5,
+                    width: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-
                   const SizedBox(height: 25),
-
-                  // NAME
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: "Name",
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // EMAIL
                   TextField(
                     decoration: InputDecoration(
                       hintText: "Email Address",
@@ -129,10 +104,7 @@ class SignUpPage extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // PASSWORD
                   TextField(
                     obscureText: true,
                     decoration: InputDecoration(
@@ -145,18 +117,19 @@ class SignUpPage extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 15),
-
                   const Center(child: Text("Forgot Password?")),
                 ],
               ),
             ),
-
-            // BUTTON (same style as login)
             GestureDetector(
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoadingScreen(),
+                  ),
+                );
               },
               child: Container(
                 height: 55,
@@ -169,7 +142,7 @@ class SignUpPage extends StatelessWidget {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Create Account", style: TextStyle(fontSize: 18)),
+                    Text("Sign In", style: TextStyle(fontSize: 18)),
                     SizedBox(width: 10),
                     Icon(Icons.arrow_forward),
                   ],

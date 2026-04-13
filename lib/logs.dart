@@ -12,7 +12,52 @@ class Logs extends StatefulWidget {
   State<Logs> createState() => _LogsState();
 }
 
-class _LogsState extends State<Logs> {
+class _LogsState extends State<Logs> with TickerProviderStateMixin {
+  late AnimationController _healthController;
+  late AnimationController _stressController;
+
+  late Animation<Offset> _healthSlide;
+  late Animation<Offset> _stressSlide;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _healthController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _stressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _healthSlide = Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _healthController, curve: Curves.easeOut),
+        );
+
+    _stressSlide = Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _stressController, curve: Curves.easeOut),
+        );
+
+    // Start animations
+    _healthController.forward();
+
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _stressController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _healthController.dispose();
+    _stressController.dispose();
+    super.dispose();
+  }
+
   Route _createRoute(Widget page) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => page,
@@ -30,6 +75,7 @@ class _LogsState extends State<Logs> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,44 +145,27 @@ class _LogsState extends State<Logs> {
           child: Column(
             children: [
               _drawerItem(Icons.home, "Home", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Home()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Home()));
               }),
-
               _drawerItem(Icons.list_alt, "Logs", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Logs()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Logs()));
               }),
-
               _drawerItem(Icons.favorite, "Health", () {
                 Navigator.pushReplacement(
                   context,
                   _createRoute(const Health()),
                 );
               }),
-
               _drawerItem(Icons.auto_awesome, "AI Chat", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Chat()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Chat()));
               }),
-
               _drawerItem(Icons.location_on, "Vet Locator", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Vet()),
-                );
+                Navigator.pushReplacement(context, _createRoute(const Vet()));
               }),
-
               _drawerItem(Icons.person, "Profile", () {
                 Navigator.pushReplacement(
                   context,
-                 _createRoute(const Profile()),
+                  _createRoute(const Profile()),
                 );
               }),
             ],
@@ -190,15 +219,33 @@ class _LogsState extends State<Logs> {
                 mainAxisSpacing: 8,
               ),
               itemBuilder: (context, index) {
-                return Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFB8B8E9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    "${index + 1}",
-                    style: const TextStyle(color: Colors.white),
+                ValueNotifier<bool> isHovered = ValueNotifier(false);
+
+                return MouseRegion(
+                  onEnter: (_) => isHovered.value = true,
+                  onExit: (_) => isHovered.value = false,
+                  child: ValueListenableBuilder(
+                    valueListenable: isHovered,
+                    builder: (context, hovered, child) {
+                      return AnimatedScale(
+                        scale: hovered ? 1.2 : 1.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          decoration: BoxDecoration(
+                            color: hovered
+                                ? const Color(0xFF8E8EE0)
+                                : const Color(0xFFB8B8E9),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            "${index + 1}",
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
@@ -220,8 +267,8 @@ class _LogsState extends State<Logs> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
+          children: [
+            const Text(
               "😿 Concern",
               style: TextStyle(
                 fontSize: 18,
@@ -229,26 +276,40 @@ class _LogsState extends State<Logs> {
                 color: Colors.white,
               ),
             ),
-            SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               "Score: 50     Health: 5/10     Stress: 5/10",
               style: TextStyle(color: Colors.white),
             ),
-            SizedBox(height: 10),
-            Text("Health", style: TextStyle(color: Colors.white)),
-            SizedBox(height: 5),
-            LinearProgressIndicator(
-              value: 0.5,
-              backgroundColor: Colors.white,
-              color: Color(0xFFB8B8E9),
+            const SizedBox(height: 10),
+
+            const Text("Health", style: TextStyle(color: Colors.white)),
+            const SizedBox(height: 5),
+
+            AnimatedBuilder(
+              animation: _healthController,
+              builder: (context, child) {
+                return LinearProgressIndicator(
+                  value: _healthController.value * 0.5, // animates from 0 → 0.5
+                  backgroundColor: Colors.white,
+                  color: const Color(0xFFB8B8E9),
+                );
+              },
             ),
-            SizedBox(height: 10),
-            Text("Stress", style: TextStyle(color: Colors.white)),
-            SizedBox(height: 5),
-            LinearProgressIndicator(
-              value: 0.5,
-              backgroundColor: Colors.white,
-              color: Color(0xFFB8B8E9),
+
+            const SizedBox(height: 10),
+
+            const Text("Stress", style: TextStyle(color: Colors.white)),
+            const SizedBox(height: 5),
+            AnimatedBuilder(
+              animation: _stressController,
+              builder: (context, child) {
+                return LinearProgressIndicator(
+                  value: _stressController.value * 0.5,
+                  backgroundColor: Colors.white,
+                  color: const Color(0xFFB8B8E9),
+                );
+              },
             ),
           ],
         ),
@@ -260,6 +321,7 @@ class _LogsState extends State<Logs> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFFB8B8E9),
@@ -278,6 +340,7 @@ class _LogsState extends State<Logs> {
             ),
             const SizedBox(height: 15),
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -314,40 +377,22 @@ class _LogsState extends State<Logs> {
       unselectedItemColor: Colors.white,
       onTap: (index) {
         if (index == 0) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Home()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Home()));
         }
         if (index == 1) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Logs()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Logs()));
         }
         if (index == 2) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Health()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Health()));
         }
         if (index == 3) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Chat()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Chat()));
         }
         if (index == 4) {
-          Navigator.pushReplacement(
-            context,
-           _createRoute(const Vet()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Vet()));
         }
         if (index == 5) {
-          Navigator.pushReplacement(
-            context,
-            _createRoute(const Profile()),
-          );
+          Navigator.pushReplacement(context, _createRoute(const Profile()));
         }
       },
       items: const [
