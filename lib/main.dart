@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import "login.dart";
+import "home.dart";
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -22,6 +28,10 @@ class MyApp extends StatelessWidget {
           primary: AppColors.primary,
           secondary: AppColors.secondary,
           surface: AppColors.surface,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.textSecondary,
+          foregroundColor: Colors.white,
         ),
       ),
       home: const SplashScreen(),
@@ -55,11 +65,15 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return; // IMPORTANT safety check
+      if (!mounted) return;
+
+      final user = FirebaseAuth.instance.currentUser;
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const Login()),
+        MaterialPageRoute(
+          builder: (context) => user == null ? const Login() : const Home(),
+        ),
       );
     });
   }

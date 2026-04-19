@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import "chat.dart";
 import "profile.dart";
@@ -6,6 +7,7 @@ import "health.dart";
 import "vet.dart";
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
+import 'login.dart';
 
 class Logs extends StatefulWidget {
   const Logs({super.key});
@@ -102,6 +104,16 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
     );
   }
 
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const Login()),
+      (route) => false,
+    );
+  }
+
   Widget _buildAppBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -131,7 +143,16 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
               ),
             ],
           ),
-          const Icon(Icons.notifications_none, color: AppColors.surface),
+          Row(
+            children: [
+              const Icon(Icons.notifications_none, color: AppColors.surface),
+              IconButton(
+                onPressed: _signOut,
+                icon: const Icon(Icons.logout, color: AppColors.surface),
+                tooltip: 'Sign out',
+              ),
+            ],
+          ),
         ],
       ),
     );
