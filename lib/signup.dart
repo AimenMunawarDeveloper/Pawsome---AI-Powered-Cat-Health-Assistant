@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pawsome/loading.dart';
 
 import 'app_colors.dart';
+import 'profile_data_service.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -12,6 +13,7 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  final ProfileDataService _profileDataService = ProfileDataService();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -48,6 +50,7 @@ class _SignUpPageState extends State<SignUpPage> {
           .createUserWithEmailAndPassword(email: email, password: password);
 
       await credential.user?.updateDisplayName(name);
+      await _profileDataService.createProfileIfMissing(name: name, email: email);
 
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
@@ -125,26 +128,36 @@ class _SignUpPageState extends State<SignUpPage> {
                     children: [
                       /// HEADER
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          GestureDetector(
-                            onTap: _isLoading
+                          TextButton(
+                            onPressed: _isLoading
                                 ? null
                                 : () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                            ),
                             child: const Text(
                               "Login",
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 18,
                                 color: AppColors.textPrimary,
                               ),
                             ),
                           ),
-                          const Text(
-                            "Sign Up",
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                          const Expanded(
+                            child: Text(
+                              "Sign Up",
+                              textAlign: TextAlign.right,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
                           ),
                         ],

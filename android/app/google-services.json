@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "615853406315",
-    "project_id": "pawsome-2235c",
-    "storage_bucket": "pawsome-2235c.firebasestorage.app"
+    "project_number": "107702478603",
+    "project_id": "pawsome-app-7abf4",
+    "storage_bucket": "pawsome-app-7abf4.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:615853406315:android:67beaa49f4112296ee192e",
+        "mobilesdk_app_id": "1:107702478603:android:49cebe172869812ca5640e",
         "android_client_info": {
           "package_name": "com.example.pawsome"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDeCy5eJRTr4qzfs6lUYIML1qDa4JgUAl0"
+          "current_key": "AIzaSyBA-GVxGPZ9tkkPQEeDSn-aQgelaVgQf_g"
         }
       ],
       "services": {

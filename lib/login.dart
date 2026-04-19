@@ -24,7 +24,7 @@ class _LoginState extends State<Login> {
     super.dispose();
   }
 
-  Future<void> _signIn() async {
+  Future<void> _signIn() async { 
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -122,18 +122,20 @@ class _LoginState extends State<Login> {
                     children: [
                       /// HEADER
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            "Login",
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                          const Expanded(
+                            child: Text(
+                              "Login",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
                           ),
-                          GestureDetector(
-                            onTap: _isLoading
+                          TextButton(
+                            onPressed: _isLoading
                                 ? null
                                 : () {
                                     Navigator.push(
@@ -144,8 +146,15 @@ class _LoginState extends State<Login> {
                                       ),
                                     );
                                   },
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                            ),
                             child: const Text(
                               "Sign Up",
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 18,
                                 color: AppColors.textPrimary,
