@@ -5,6 +5,7 @@ import "home.dart";
 import "health.dart";
 import "vet.dart";
 import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
 
 class Logs extends StatefulWidget {
   const Logs({super.key});
@@ -79,7 +80,7 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.backgroundAlt,
       drawer: _buildDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -104,7 +105,7 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
   Widget _buildAppBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      color: const Color(0xFFB8B8E9),
+      color: AppColors.primary,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -123,14 +124,14 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
               Text(
                 "Pawsome",
                 style: GoogleFonts.leckerliOne(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const Icon(Icons.notifications_none, color: Colors.white),
+          const Icon(Icons.notifications_none, color: AppColors.surface),
         ],
       ),
     );
@@ -195,7 +196,7 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFE7B2BD),
+          color: AppColors.secondary,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -205,7 +206,7 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 15),
@@ -234,8 +235,8 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
                           duration: const Duration(milliseconds: 200),
                           decoration: BoxDecoration(
                             color: hovered
-                                ? const Color(0xFF8E8EE0)
-                                : const Color(0xFFB8B8E9),
+                                ? AppColors.primaryDark
+                                : AppColors.primary,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           alignment: Alignment.center,
@@ -262,7 +263,7 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFE48CA1),
+          color: AppColors.secondaryDark,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -291,8 +292,8 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
               builder: (context, child) {
                 return LinearProgressIndicator(
                   value: _healthController.value * 0.5, // animates from 0 → 0.5
-                  backgroundColor: Colors.white,
-                  color: const Color(0xFFB8B8E9),
+                  backgroundColor: AppColors.surface,
+                  color: AppColors.primarySoft,
                 );
               },
             ),
@@ -306,8 +307,8 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
               builder: (context, child) {
                 return LinearProgressIndicator(
                   value: _stressController.value * 0.5,
-                  backgroundColor: Colors.white,
-                  color: const Color(0xFFB8B8E9),
+                  backgroundColor: AppColors.surface,
+                  color: AppColors.primarySoft,
                 );
               },
             ),
@@ -324,7 +325,7 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFB8B8E9),
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -372,9 +373,9 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
     return BottomNavigationBar(
       currentIndex: 1,
       type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color(0xFFB8B8E9),
-      selectedItemColor: Colors.purple,
-      unselectedItemColor: Colors.white,
+      backgroundColor: AppColors.primary,
+      selectedItemColor: AppColors.navSelected,
+      unselectedItemColor: AppColors.surface,
       onTap: (index) {
         if (index == 0) {
           Navigator.pushReplacement(context, _createRoute(const Home()));

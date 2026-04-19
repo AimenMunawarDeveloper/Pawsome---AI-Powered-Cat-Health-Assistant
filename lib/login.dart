@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pawsome/loading.dart';
 import 'signup.dart';
-import 'home.dart';
+import 'app_colors.dart';
 
 class Login extends StatelessWidget {
   const Login({super.key});
@@ -28,7 +28,7 @@ class Login extends StatelessWidget {
             ),
           ],
         ),
-        backgroundColor: const Color(0xFF929292),
+        backgroundColor: AppColors.textSecondary,
       ),
       body: Container(
         width: double.infinity,
@@ -36,7 +36,7 @@ class Login extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFB8B8E9), Color(0xFFFFFFFF)],
+            colors: [AppColors.primarySoft, AppColors.surface],
           ),
         ),
         child: Column(
@@ -48,7 +48,7 @@ class Login extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 25),
               padding: const EdgeInsets.all(25),
               decoration: BoxDecoration(
-                color: const Color(0xFFE7B2BD),
+                color: AppColors.secondarySoft,
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Column(
@@ -59,9 +59,10 @@ class Login extends StatelessWidget {
                     children: [
                       const Text(
                         "Login",
-                        style: TextStyle(
+                      style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       GestureDetector(
@@ -78,6 +79,7 @@ class Login extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -88,7 +90,7 @@ class Login extends StatelessWidget {
                     height: 5,
                     width: 60,
                     decoration: BoxDecoration(
-                      color: Colors.black54,
+                      color: AppColors.secondaryDark,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -96,6 +98,7 @@ class Login extends StatelessWidget {
                   TextField(
                     decoration: InputDecoration(
                       hintText: "Email Address",
+                      hintStyle: const TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -109,6 +112,7 @@ class Login extends StatelessWidget {
                     obscureText: true,
                     decoration: InputDecoration(
                       hintText: "Password",
+                      hintStyle: const TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -118,7 +122,12 @@ class Login extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  const Center(child: Text("Forgot Password?")),
+                  const Center(
+                    child: Text(
+                      "Forgot Password?",
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -135,16 +144,19 @@ class Login extends StatelessWidget {
                 height: 55,
                 width: 200,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(40),
-                  border: Border.all(color: Colors.black45),
+                  border: Border.all(color: AppColors.primary),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Sign In", style: TextStyle(fontSize: 18)),
+                    Text(
+                      "Sign In",
+                      style: TextStyle(fontSize: 18, color: AppColors.textPrimary),
+                    ),
                     SizedBox(width: 10),
-                    Icon(Icons.arrow_forward),
+                    Icon(Icons.arrow_forward, color: AppColors.textPrimary),
                   ],
                 ),
               ),

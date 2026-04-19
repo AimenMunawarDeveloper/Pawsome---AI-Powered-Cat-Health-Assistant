@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import "login.dart";
 import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,9 +13,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+      theme: ThemeData(
+        scaffoldBackgroundColor: AppColors.backgroundAlt,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          primary: AppColors.primary,
+          secondary: AppColors.secondary,
+          surface: AppColors.surface,
+        ),
+      ),
+      home: const SplashScreen(),
     );
   }
 }
@@ -71,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFFB8B8E9), Colors.white],
+              colors: [AppColors.primarySoft, AppColors.surface],
             ),
           ),
           child: Column(
@@ -82,7 +92,7 @@ class _SplashScreenState extends State<SplashScreen>
               Text(
                 "Pawsome",
                 style: GoogleFonts.leckerliOne(
-                  color: Colors.black,
+                  color: AppColors.textPrimary,
                   fontSize: 32,
                 ),
               ),

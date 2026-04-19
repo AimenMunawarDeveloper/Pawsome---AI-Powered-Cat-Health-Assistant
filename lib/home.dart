@@ -5,6 +5,7 @@ import "logs.dart";
 import "health.dart";
 import "vet.dart";
 import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -85,7 +86,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 208, 219),
+      backgroundColor: AppColors.background,
       drawer: _buildDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -113,7 +114,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   Widget _buildAppBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      color: const Color(0xFFB8B8E9),
+      color: AppColors.primary,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -132,14 +133,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               Text(
                 "Pawsome",
                 style: GoogleFonts.leckerliOne(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const Icon(Icons.notifications_none, color: Colors.white),
+          const Icon(Icons.notifications_none, color: AppColors.surface),
         ],
       ),
     );
@@ -214,12 +215,19 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               children: [
                 Text(
                   "Plan Mimi’s day!",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 const Text(
                   "A cute way to plan your cat’s activities and make every day more purr-fect.",
-                  style: TextStyle(fontSize: 14),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -326,7 +334,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       items: const ["Brush teeth", "Eaten food", "Drank Water", "Played"],
       checkedList: dailyChecked,
       icon: Icons.check_circle_outline,
-      color: const Color(0xFFB8B8E9),
+      color: AppColors.primary,
     );
   }
 
@@ -336,7 +344,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       items: const ["Go for walk", "Eaten Treats", "Bath", "Vaccination"],
       checkedList: extraChecked,
       icon: Icons.star_border,
-      color: const Color(0xFFE7B2BD),
+      color: AppColors.secondary,
     );
   }
 
@@ -405,7 +413,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             duration: const Duration(milliseconds: 300),
                             style: TextStyle(
                               fontSize: 14,
-                              color: isChecked ? Colors.grey : Colors.black,
+                              color: isChecked
+                                  ? AppColors.textSecondary
+                                  : AppColors.textPrimary,
                               decoration: isChecked
                                   ? TextDecoration.lineThrough
                                   : TextDecoration.none,
@@ -506,7 +516,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   Widget _buildTipCard(String image, String title) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
@@ -543,9 +553,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     return BottomNavigationBar(
       currentIndex: 0,
       type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color(0xFFB8B8E9),
-      selectedItemColor: Colors.purple,
-      unselectedItemColor: Colors.white,
+      backgroundColor: AppColors.primary,
+      selectedItemColor: AppColors.navSelected,
+      unselectedItemColor: AppColors.surface,
       onTap: (index) {
         if (index == 0) {
           Navigator.pushReplacement(context, _createRoute(const Home()));
@@ -609,9 +619,9 @@ class _AddButtonState extends State<_AddButton> {
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
         child: const CircleAvatar(
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.secondaryDark,
           radius: 14,
-          child: Icon(Icons.add, size: 16, color: Colors.white),
+          child: Icon(Icons.add, size: 16, color: AppColors.surface),
         ),
       ),
     );

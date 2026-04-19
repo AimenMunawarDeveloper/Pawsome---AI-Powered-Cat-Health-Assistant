@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'home.dart';
+import 'app_colors.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -44,7 +45,7 @@ class _LoadingScreenState extends State<LoadingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 208, 219),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: Column(
@@ -100,7 +101,9 @@ class _LoadingScreenState extends State<LoadingScreen>
                 width: 10,
                 height: 10,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB8B8E9).withOpacity(0.5 + value * 0.5),
+                  color: AppColors.primary.withValues(
+                    alpha: 0.5 + value * 0.5,
+                  ),
                   shape: BoxShape.circle,
                 ),
               ),

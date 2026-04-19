@@ -5,6 +5,7 @@ import "logs.dart";
 import "health.dart";
 import "vet.dart";
 import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
 
 class Chat extends StatefulWidget {
   const Chat({super.key});
@@ -74,7 +75,7 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.backgroundAlt,
       drawer: _buildDrawer(),
       body: SafeArea(
         child: Column(
@@ -151,7 +152,7 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+          color: AppColors.surface,
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: Colors.black12),
           ),
@@ -178,7 +179,7 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
         width: 8,
         height: 8,
         decoration: const BoxDecoration(
-          color: Color(0xFFB8B8E9),
+          color: AppColors.primary,
           shape: BoxShape.circle,
         ),
       ),
@@ -211,11 +212,14 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: message.isUser ? const Color(0xFFE7B2BD) : Colors.white,
+                color: message.isUser ? AppColors.secondarySoft : AppColors.surface,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: Colors.black12),
               ),
-              child: Text(message.text),
+              child: Text(
+                message.text,
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
             ),
           ),
         ],
@@ -227,7 +231,7 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         border: Border(top: BorderSide(color: Colors.black12)),
       ),
       child: Row(
@@ -276,7 +280,7 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
   Widget _buildAppBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      color: const Color(0xFFB8B8E9),
+      color: AppColors.primary,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -295,13 +299,13 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
               Text(
                 "Pawsome",
                 style: GoogleFonts.leckerliOne(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   fontSize: 32,
                 ),
               ),
             ],
           ),
-          const Icon(Icons.notifications_none, color: Colors.white),
+          const Icon(Icons.notifications_none, color: AppColors.surface),
         ],
       ),
     );
@@ -381,9 +385,9 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
     return BottomNavigationBar(
       currentIndex: 3,
       type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color(0xFFB8B8E9),
-      selectedItemColor: Colors.purple,
-      unselectedItemColor: Colors.white,
+      backgroundColor: AppColors.primary,
+      selectedItemColor: AppColors.navSelected,
+      unselectedItemColor: AppColors.surface,
       onTap: (index) {
         if (index == 0) {
           Navigator.pushReplacement(

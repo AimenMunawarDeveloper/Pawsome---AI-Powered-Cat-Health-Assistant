@@ -5,6 +5,7 @@ import "logs.dart";
 import "health.dart";
 import "vet.dart";
 import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -35,7 +36,7 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.backgroundAlt,
       drawer: _buildDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -60,7 +61,7 @@ class _ProfileState extends State<Profile> {
   Widget _buildAppBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      color: const Color(0xFFB8B8E9),
+      color: AppColors.primary,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -79,14 +80,14 @@ class _ProfileState extends State<Profile> {
               Text(
                 "Pawsome",
                 style: GoogleFonts.leckerliOne(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const Icon(Icons.notifications_none, color: Colors.white),
+          const Icon(Icons.notifications_none, color: AppColors.surface),
         ],
       ),
     );
@@ -161,12 +162,19 @@ class _ProfileState extends State<Profile> {
               children: [
                 Text(
                   "Mimi’s Profile",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 SizedBox(height: 8),
                 Text(
                   "Easily change your pet's information to keep their profile up to date.",
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -253,7 +261,7 @@ class _ProfileState extends State<Profile> {
                       Expanded(
                         child: Text(
                           entry.key,
-                          style: const TextStyle(color: Colors.black54),
+                          style: const TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                       Text(
@@ -277,9 +285,9 @@ class _ProfileState extends State<Profile> {
     return BottomNavigationBar(
       currentIndex: 5,
       type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color(0xFFB8B8E9),
-      selectedItemColor: Colors.purple,
-      unselectedItemColor: Colors.white,
+      backgroundColor: AppColors.primary,
+      selectedItemColor: AppColors.navSelected,
+      unselectedItemColor: AppColors.surface,
       onTap: (index) {
         if (index == 0) {
           Navigator.pushReplacement(context, _createRoute(const Home()));
@@ -345,10 +353,10 @@ class _EditButtonState extends State<_EditButton> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFB8B8E9),
+            color: AppColors.primary,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Text("Edit", style: TextStyle(color: Colors.white)),
+          child: const Text("Edit", style: TextStyle(color: AppColors.surface)),
         ),
       ),
     );

@@ -5,6 +5,7 @@ import "logs.dart";
 import "home.dart";
 import "vet.dart";
 import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
 
 class Health extends StatefulWidget {
   const Health({super.key});
@@ -17,7 +18,7 @@ class _HealthState extends State<Health> {
   Widget _animatedAddButton(VoidCallback onTap) {
     return _AddButton(onTap: onTap);
   }
-Route _createRoute(Widget page) {
+  Route _createRoute(Widget page) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionDuration: const Duration(milliseconds: 400),
@@ -37,7 +38,7 @@ Route _createRoute(Widget page) {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.backgroundAlt,
       drawer: _buildDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -66,7 +67,7 @@ Route _createRoute(Widget page) {
   Widget _buildAppBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      color: const Color(0xFFB8B8E9),
+      color: AppColors.primary,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -85,14 +86,14 @@ Route _createRoute(Widget page) {
               Text(
                 "Pawsome",
                 style: GoogleFonts.leckerliOne(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const Icon(Icons.notifications_none, color: Colors.white),
+          const Icon(Icons.notifications_none, color: AppColors.surface),
         ],
       ),
     );
@@ -184,7 +185,7 @@ Route _createRoute(Widget page) {
                 SizedBox(height: 8),
                 Text(
                   "View all the records related to your pet's health",
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -201,7 +202,7 @@ Route _createRoute(Widget page) {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFE7B2BD),
+          color: AppColors.secondarySoft,
           borderRadius: BorderRadius.circular(20),
         ),
         child: const Column(
@@ -234,7 +235,7 @@ Route _createRoute(Widget page) {
             child: Container(
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
-                color: const Color(0xFFB8B8E9),
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(15),
               ),
               child: const Column(
@@ -258,7 +259,7 @@ Route _createRoute(Widget page) {
             child: Container(
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
-                color: const Color(0xFFB8B8E9),
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(15),
               ),
               child: const Column(
@@ -310,12 +311,16 @@ Route _createRoute(Widget page) {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.vaccines, size: 18, color: Colors.black54),
+                    const Icon(
+                      Icons.vaccines,
+                      size: 18,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(child: Text(vaccine)),
                     const Text(
                       "1/12/2025",
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -354,7 +359,7 @@ Route _createRoute(Widget page) {
                     const Icon(
                       Icons.radio_button_checked,
                       size: 18,
-                      color: Color(0xFFB8B8E9),
+                      color: AppColors.primary,
                     ),
                     const SizedBox(width: 10),
                     Expanded(child: Text(item)),
@@ -373,9 +378,9 @@ Route _createRoute(Widget page) {
     return BottomNavigationBar(
       currentIndex: 2,
       type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color(0xFFB8B8E9),
-      selectedItemColor: Colors.purple,
-      unselectedItemColor: Colors.white,
+      backgroundColor: AppColors.primary,
+      selectedItemColor: AppColors.navSelected,
+      unselectedItemColor: AppColors.surface,
       onTap: (index) {
         if (index == 0) {
           Navigator.pushReplacement(
@@ -457,9 +462,9 @@ class _AddButtonState extends State<_AddButton> {
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
         child: const CircleAvatar(
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.secondaryDark,
           radius: 14,
-          child: Icon(Icons.add, size: 16, color: Colors.white),
+          child: Icon(Icons.add, size: 16, color: AppColors.surface),
         ),
       ),
     );

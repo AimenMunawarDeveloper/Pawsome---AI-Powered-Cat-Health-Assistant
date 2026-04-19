@@ -5,6 +5,7 @@ import "logs.dart";
 import "health.dart";
 import "home.dart";
 import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
 
 class Vet extends StatefulWidget {
   const Vet({super.key});
@@ -35,7 +36,7 @@ class _VetState extends State<Vet> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFD0DB),
+      backgroundColor: AppColors.background,
       drawer: _buildDrawer(),
       body: SafeArea(
         child: Column(
@@ -64,7 +65,7 @@ class _VetState extends State<Vet> {
                       name: "Dr.Hafsa",
                       specialty: "Internal Medicine",
                       phone: "+92 3637936633",
-                      color: const Color(0xFFB8B8E9),
+                      color: AppColors.primary,
                     ),
                   ),
                   Positioned(
@@ -74,7 +75,7 @@ class _VetState extends State<Vet> {
                       name: "Dr.Ahmed Ali",
                       specialty: "Internal Medicine",
                       phone: "+92 9232936633",
-                      color: const Color(0xFFE7B2BD),
+                      color: AppColors.secondary,
                     ),
                   ),
                   Positioned(
@@ -96,7 +97,7 @@ class _VetState extends State<Vet> {
   Widget _buildAppBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      color: const Color(0xFFB8B8E9),
+      color: AppColors.primary,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -115,14 +116,14 @@ class _VetState extends State<Vet> {
               Text(
                 "Pawsome",
                 style: GoogleFonts.leckerliOne(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const Icon(Icons.notifications_none, color: Colors.white),
+          const Icon(Icons.notifications_none, color: AppColors.surface),
         ],
       ),
     );
@@ -226,7 +227,7 @@ class _VetState extends State<Vet> {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
@@ -290,9 +291,9 @@ class _VetState extends State<Vet> {
     return BottomNavigationBar(
       currentIndex: 4,
       type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color(0xFFB8B8E9),
-      selectedItemColor: Colors.purple,
-      unselectedItemColor: Colors.white,
+      backgroundColor: AppColors.primary,
+      selectedItemColor: AppColors.navSelected,
+      unselectedItemColor: AppColors.surface,
       onTap: (index) {
         if (index == 0) {
           Navigator.pushReplacement(context, _createRoute(const Home()));
