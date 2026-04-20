@@ -61,14 +61,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     await _profileDataService.ensureHomeData();
     final results = await Future.wait<dynamic>([
       _profileDataService.getProfileData(),
-      // _profileDataService.getRecommendations(),
+      _profileDataService.getRecommendations(),
     ]);
 
     return _HomeViewData(
       profileData: results[0] as Map<String, dynamic>,
-      // recommendations: (results[1] as List<dynamic>)
-      //     .map((item) => Map<String, dynamic>.from(item as Map))
-      //     .toList(),
+      recommendations: (results[1] as List<dynamic>)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList(),
     );
   }
 
@@ -555,70 +555,70 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     );
   }
 
-  // Widget _buildRecommendedSection(List<Map<String, dynamic>> tips) {
-  //   return Padding(
-  //     key: _tipsKey,
-  //     padding: const EdgeInsets.symmetric(horizontal: 20),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         const Text(
-  //           'Recommended Tips',
-  //           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-  //         ),
-  //         const SizedBox(height: 10),
-  //         SizedBox(
-  //           height: 180,
-  //           child: tips.isEmpty
-  //               ? const Center(
-  //                   child: Text(
-  //                     'No recommendations available yet.',
-  //                     style: TextStyle(color: AppColors.textSecondary),
-  //                   ),
-  //                 )
-  //               : ListView.builder(
-  //                   scrollDirection: Axis.horizontal,
-  //                   itemCount: tips.length,
-  //                   itemBuilder: (context, index) {
-  //                     final tip = tips[index];
-  //                     final start = index * 0.2;
-  //                     final end = start + 0.6;
+  Widget _buildRecommendedSection(List<Map<String, dynamic>> tips) {
+    return Padding(
+      key: _tipsKey,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recommended Tips',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 180,
+            child: tips.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No recommendations available yet.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  )
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: tips.length,
+                    itemBuilder: (context, index) {
+                      final tip = tips[index];
+                      final start = index * 0.2;
+                      final end = start + 0.6;
 
-  //                     final curvedAnimation = CurvedAnimation(
-  //                       parent: _controller,
-  //                       curve: Interval(
-  //                         start,
-  //                         end > 1 ? 1 : end,
-  //                         curve: Curves.easeOut,
-  //                       ),
-  //                     );
+                      final curvedAnimation = CurvedAnimation(
+                        parent: _controller,
+                        curve: Interval(
+                          start,
+                          end > 1 ? 1 : end,
+                          curve: Curves.easeOut,
+                        ),
+                      );
 
-  //                     final animation = Tween<Offset>(
-  //                       begin: const Offset(1, 0),
-  //                       end: Offset.zero,
-  //                     ).animate(curvedAnimation);
+                      final animation = Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(curvedAnimation);
 
-  //                     return SlideTransition(
-  //                       position: animation,
-  //                       child: Padding(
-  //                         padding: const EdgeInsets.only(right: 10),
-  //                         child: SizedBox(
-  //                           width: 160,
-  //                           child: _buildTipCard(
-  //                             tip['image'] as String? ??
-  //                                 'assets/images/tip1.png',
-  //                             tip['title'] as String? ?? 'Helpful tip',
-  //                           ),
-  //                         ),
-  //                       ),
-  //                     );
-  //                   },
-  //                 ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+                      return SlideTransition(
+                        position: animation,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: SizedBox(
+                            width: 160,
+                            child: _buildTipCard(
+                              tip['image'] as String? ??
+                                  'assets/images/tip1.png',
+                              tip['title'] as String? ?? 'Helpful tip',
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildTipCard(String image, String title) {
     final imageWidget =
@@ -790,8 +790,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                         const SizedBox(height: 20),
                         _buildExtraActivities(data.profileData),
                         const SizedBox(height: 20),
-                        /*_buildRecommendedSection(data.recommendations),
-                        const SizedBox(height: 20),*/
+                        _buildRecommendedSection(data.recommendations),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -806,11 +806,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 class _HomeViewData {
   const _HomeViewData({
     required this.profileData,
-    // required this.recommendations,
+    required this.recommendations,
   });
 
   final Map<String, dynamic> profileData;
-  // final List<Map<String, dynamic>> recommendations;
+  final List<Map<String, dynamic>> recommendations;
 }
 
 class _AddButton extends StatefulWidget {

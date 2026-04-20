@@ -4,11 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'app_firestore.dart';
 
 class ProfileDataService {
-  ProfileDataService({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  }) : _firestore = firestore ?? appFirestore,
-       _auth = auth ?? FirebaseAuth.instance;
+  ProfileDataService({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _firestore = firestore ?? appFirestore,
+      _auth = auth ?? FirebaseAuth.instance;
 
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
@@ -25,6 +23,24 @@ class ProfileDataService {
     {'title': 'Eaten treats', 'done': false},
     {'title': 'Bath', 'done': false},
     {'title': 'Vaccination', 'done': false},
+  ];
+
+  static const List<Map<String, dynamic>> _defaultRecommendations = [
+    {
+      'title': 'Offer fresh water in a clean bowl every day.',
+      'image': 'assets/images/tip1.png',
+      'order': 1,
+    },
+    {
+      'title': 'Set aside playtime with a toy to keep your cat active.',
+      'image': 'assets/images/tip2.png',
+      'order': 2,
+    },
+    {
+      'title': 'Keep the litter box clean and in a quiet place.',
+      'image': 'assets/images/tip2.png',
+      'order': 3,
+    },
   ];
 
   DocumentReference<Map<String, dynamic>> get _profileDoc {
@@ -64,13 +80,7 @@ class ProfileDataService {
         'address': '',
         'emergencyNo': '',
       },
-      'pet': {
-        'name': '',
-        'breed': '',
-        'age': '',
-        'gender': '',
-        'weight': '',
-      },
+      'pet': {'name': '', 'breed': '', 'age': '', 'gender': '', 'weight': ''},
       'health': {
         'vetName': '',
         'vetPhone': '',
@@ -82,6 +92,7 @@ class ProfileDataService {
       'home': {
         'dailyTasks': _defaultDailyTasks,
         'extraActivities': _defaultExtraActivities,
+        'recommendations': _defaultRecommendations,
       },
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
@@ -101,6 +112,9 @@ class ProfileDataService {
     }
     if (!home.containsKey('extraActivities')) {
       updates['home.extraActivities'] = _defaultExtraActivities;
+    }
+    if (!home.containsKey('recommendations')) {
+      updates['home.recommendations'] = _defaultRecommendations;
     }
 
     if (updates.isEmpty) return;
@@ -179,20 +193,15 @@ class ProfileDataService {
       data['health'] as Map<String, dynamic>? ?? {},
     );
     final vaccinations = List<Map<String, String>>.from(
-      ((health['vaccinations'] as List<dynamic>? ?? const <dynamic>[])
-          .map((entry) => Map<String, String>.from(entry as Map))),
+      ((health['vaccinations'] as List<dynamic>? ?? const <dynamic>[]).map(
+        (entry) => Map<String, String>.from(entry as Map),
+      )),
     );
 
-    vaccinations.add({
-      'name': name,
-      'date': date,
-    });
+    vaccinations.add({'name': name, 'date': date});
 
     await _profileDoc.set({
-      'health': {
-        ...health,
-        'vaccinations': vaccinations,
-      },
+      'health': {...health, 'vaccinations': vaccinations},
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
@@ -204,18 +213,16 @@ class ProfileDataService {
       data['health'] as Map<String, dynamic>? ?? {},
     );
     final vaccinations = List<Map<String, String>>.from(
-      ((health['vaccinations'] as List<dynamic>? ?? const <dynamic>[])
-          .map((entry) => Map<String, String>.from(entry as Map))),
+      ((health['vaccinations'] as List<dynamic>? ?? const <dynamic>[]).map(
+        (entry) => Map<String, String>.from(entry as Map),
+      )),
     );
 
     if (index < 0 || index >= vaccinations.length) return;
     vaccinations.removeAt(index);
 
     await _profileDoc.set({
-      'health': {
-        ...health,
-        'vaccinations': vaccinations,
-      },
+      'health': {...health, 'vaccinations': vaccinations},
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
@@ -226,17 +233,16 @@ class ProfileDataService {
     final health = Map<String, dynamic>.from(
       data['health'] as Map<String, dynamic>? ?? {},
     );
-    final allergies = List<String>.from(health['allergies'] as List<dynamic>? ?? const <dynamic>[]);
+    final allergies = List<String>.from(
+      health['allergies'] as List<dynamic>? ?? const <dynamic>[],
+    );
 
     if (!allergies.contains(allergy)) {
       allergies.add(allergy);
     }
 
     await _profileDoc.set({
-      'health': {
-        ...health,
-        'allergies': allergies,
-      },
+      'health': {...health, 'allergies': allergies},
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
@@ -255,10 +261,7 @@ class ProfileDataService {
     allergies.removeAt(index);
 
     await _profileDoc.set({
-      'health': {
-        ...health,
-        'allergies': allergies,
-      },
+      'health': {...health, 'allergies': allergies},
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
@@ -273,17 +276,15 @@ class ProfileDataService {
       data['home'] as Map<String, dynamic>? ?? {},
     );
     final tasks = List<Map<String, dynamic>>.from(
-      ((home[section] as List<dynamic>? ?? const <dynamic>[])
-          .map((entry) => Map<String, dynamic>.from(entry as Map))),
+      ((home[section] as List<dynamic>? ?? const <dynamic>[]).map(
+        (entry) => Map<String, dynamic>.from(entry as Map),
+      )),
     );
 
     tasks.add({'title': title, 'done': false});
 
     await _profileDoc.set({
-      'home': {
-        ...home,
-        section: tasks,
-      },
+      'home': {...home, section: tasks},
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
@@ -299,39 +300,68 @@ class ProfileDataService {
       data['home'] as Map<String, dynamic>? ?? {},
     );
     final tasks = List<Map<String, dynamic>>.from(
-      ((home[section] as List<dynamic>? ?? const <dynamic>[])
-          .map((entry) => Map<String, dynamic>.from(entry as Map))),
+      ((home[section] as List<dynamic>? ?? const <dynamic>[]).map(
+        (entry) => Map<String, dynamic>.from(entry as Map),
+      )),
     );
 
     if (index < 0 || index >= tasks.length) return;
 
-    tasks[index] = {
-      ...tasks[index],
-      'done': done,
-    };
+    tasks[index] = {...tasks[index], 'done': done};
 
     await _profileDoc.set({
-      'home': {
-        ...home,
-        section: tasks,
-      },
+      'home': {...home, section: tasks},
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> recommendationsStream() {
-    return _firestore
-        .collection('recommendations')
-        .orderBy('order')
-        .snapshots();
+  List<Map<String, dynamic>> _normalizedRecommendations(
+    Map<String, dynamic> profileData,
+  ) {
+    final home = Map<String, dynamic>.from(
+      profileData['home'] as Map<String, dynamic>? ?? {},
+    );
+    final rawRecommendations =
+        home['recommendations'] as List<dynamic>? ?? const <dynamic>[];
+
+    final recommendations = rawRecommendations.whereType<Map>().map((entry) {
+      final data = Map<String, dynamic>.from(entry);
+      return {
+        'title': data['title']?.toString() ?? 'Helpful tip',
+        'image': data['image']?.toString() ?? 'assets/images/tip1.png',
+        'order': data['order'] is num ? (data['order'] as num).toInt() : 999,
+      };
+    }).toList();
+
+    recommendations.sort(
+      (a, b) => (a['order'] as int).compareTo(b['order'] as int),
+    );
+
+    return recommendations;
   }
 
   Future<List<Map<String, dynamic>>> getRecommendations() async {
-    final snapshot = await _firestore
-        .collection('recommendations')
-        .orderBy('order')
-        .get();
+    try {
+      final profileData = await getProfileData();
+      return _normalizedRecommendations(profileData);
+    } on FirebaseException {
+      return const <Map<String, dynamic>>[];
+    } on TypeError {
+      return const <Map<String, dynamic>>[];
+    }
+  }
 
-    return snapshot.docs.map((doc) => doc.data()).toList();
+  Stream<List<Map<String, dynamic>>> recommendationsStream() {
+    return profileStream().map((snapshot) {
+      final profileData = snapshot.data() ?? <String, dynamic>{};
+      return _normalizedRecommendations(profileData);
+    });
+  }
+
+  Future<void> seedDefaultRecommendationsForCurrentUser() async {
+    await _profileDoc.set({
+      'home': {'recommendations': _defaultRecommendations},
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 }

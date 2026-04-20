@@ -7,6 +7,10 @@ service cloud.firestore {
         && request.auth.uid == userId;
     }
 
+    match /recommendations/{documentId} {
+      allow read: if request.auth != null;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
