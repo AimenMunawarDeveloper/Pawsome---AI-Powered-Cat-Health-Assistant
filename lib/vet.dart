@@ -8,6 +8,10 @@ import "home.dart";
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'login.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class Vet extends StatefulWidget {
   const Vet({super.key});
@@ -17,6 +21,78 @@ class Vet extends StatefulWidget {
 }
 
 class _VetState extends State<Vet> {
+  List<Map<String, dynamic>> vets = [];
+  Map<String, dynamic>? selectedVet;
+  bool isLoadingVets = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchNearbyVets();
+  }
+
+  Future<void> fetchNearbyVets() async {
+    const query = '''
+[out:json][timeout:25];
+(
+  node["amenity"="veterinary"](33.40,72.80,33.90,73.30);
+  way["amenity"="veterinary"](33.40,72.80,33.90,73.30);
+  relation["amenity"="veterinary"](33.40,72.80,33.90,73.30);
+
+  node["healthcare"="veterinary"](33.40,72.80,33.90,73.30);
+  way["healthcare"="veterinary"](33.40,72.80,33.90,73.30);
+  relation["healthcare"="veterinary"](33.40,72.80,33.90,73.30);
+
+  node["name"~"animal|vet|veterinary|pet", i](33.40,72.80,33.90,73.30);
+  way["name"~"animal|vet|veterinary|pet", i](33.40,72.80,33.90,73.30);
+  relation["name"~"animal|vet|veterinary|pet", i](33.40,72.80,33.90,73.30);
+);
+out center;
+''';
+
+    final url = Uri.parse('https://overpass-api.de/api/interpreter');
+
+    try {
+      final response = await http.post(url, body: {'data': query});
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final elements = data['elements'] as List;
+
+        setState(() {
+          vets = elements
+              .map((item) {
+                final tags = item['tags'] ?? {};
+
+                final lat = item['lat'] ?? item['center']?['lat'];
+                final lon = item['lon'] ?? item['center']?['lon'];
+
+                return {
+                  'name': tags['name'] ?? 'Unnamed Vet Clinic',
+                  'phone':
+                      tags['phone'] ??
+                      tags['contact:phone'] ??
+                      'No phone available',
+                  'location': LatLng(lat, lon),
+                };
+              })
+              .where((vet) => vet['location'] != null)
+              .toList();
+
+          isLoadingVets = false;
+        });
+      } else {
+        setState(() {
+          isLoadingVets = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingVets = false;
+      });
+    }
+  }
+
   Route _createRoute(Widget page) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => page,
@@ -47,29 +123,55 @@ class _VetState extends State<Vet> {
             Expanded(
               child: Stack(
                 children: [
-                  // Map Image
                   Positioned.fill(
-                    child: InteractiveViewer(
-                      panEnabled: true,
-                      scaleEnabled: true,
-                      minScale: 1.0,
-                      maxScale: 4.0,
-                      child: Image.asset(
-                        "assets/images/map.png",
-                        fit: BoxFit.cover,
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(33.6844, 73.0479),
+                        initialZoom: 12.5,
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.example.pawsome',
+                        ),
+                        MarkerLayer(
+                          markers: vets.map((vet) {
+                            return Marker(
+                              point: vet['location'],
+                              width: 80,
+                              height: 80,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedVet = vet;
+                                  });
+                                },
+                                child: const Icon(
+                                  Icons.pets,
+                                  color: Colors.red,
+                                  size: 38,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  if (selectedVet != null)
+                    Positioned(
+                      top: 120,
+                      left: 40,
+                      child: _buildDoctorCard(
+                        name: selectedVet!['name'],
+                        specialty: "Veterinary Clinic",
+                        phone: selectedVet!['phone'],
+                        color: AppColors.primary,
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 120,
-                    left: 40,
-                    child: _buildDoctorCard(
-                      name: "Dr.Hafsa",
-                      specialty: "Internal Medicine",
-                      phone: "+92 3637936633",
-                      color: AppColors.primary,
-                    ),
-                  ),
+
                   Positioned(
                     bottom: 120,
                     left: 20,
@@ -80,6 +182,7 @@ class _VetState extends State<Vet> {
                       color: AppColors.secondary,
                     ),
                   ),
+
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -246,29 +349,36 @@ class _VetState extends State<Vet> {
 
   Widget _buildClinicList() {
     return Container(
+      constraints: const BoxConstraints(maxHeight: 260),
       padding: const EdgeInsets.all(15),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildClinicTile(
-            "Care for My Pet",
-            "Family Clinic • Sector G-13",
-            "Closes at 5PM",
-            3.9,
-          ),
-          const Divider(),
-          _buildClinicTile(
-            "Abdul Aziz",
-            "Dentistry • Sector H-12",
-            "Closes at 5PM",
-            4.0,
-          ),
-        ],
-      ),
+      child: isLoadingVets
+          ? const Center(child: CircularProgressIndicator())
+          : vets.isEmpty
+          ? const Center(
+              child: Text(
+                "No vets found nearby",
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            )
+          : ListView.separated(
+              shrinkWrap: true,
+              itemCount: vets.length,
+              separatorBuilder: (context, index) => const Divider(),
+              itemBuilder: (context, index) {
+                final vet = vets[index];
+
+                return _buildClinicTile(
+                  vet['name'],
+                  "Veterinary Clinic",
+                  vet['phone'],
+                  4.0,
+                );
+              },
+            ),
     );
   }
 
@@ -299,7 +409,11 @@ class _VetState extends State<Vet> {
                 ],
               ),
               Text(subtitle),
-              Text(time, style: const TextStyle(color: Colors.grey)),
+              Text(
+                time,
+                style: const TextStyle(color: Colors.grey),
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
