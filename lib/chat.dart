@@ -8,6 +8,8 @@ import "vet.dart";
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'login.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Chat extends StatefulWidget {
   const Chat({super.key});
@@ -18,6 +20,10 @@ class Chat extends StatefulWidget {
 
 class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
   int _currentIndex = 3;
+ late String apiKey;
+
+late final GenerativeModel _model;
+late final ChatSession _chatSession;
 
   bool _isBotTyping = false;
   final TextEditingController _messageController = TextEditingController();
@@ -45,6 +51,24 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    debugPrint("API KEY LOADED: ${apiKey.isNotEmpty}");
+  debugPrint("API KEY LENGTH: ${apiKey.length}");
+    _model = GenerativeModel(
+  model: 'gemini-2.5-pro',
+  apiKey: apiKey,
+  systemInstruction: Content.text(
+    '''
+You are Dr. Meow, a friendly AI cat health assistant.
+Only answer questions related to cats, pets, pet care, symptoms, food, grooming, and vet guidance.
+Do not diagnose serious conditions with certainty.
+For emergencies, tell the user to visit a vet immediately.
+Keep answers short, friendly, and easy to understand.
+''',
+  ),
+);
+
+_chatSession = _model.startChat();
     _messages.add(
       ChatMessage(
         text:
@@ -251,33 +275,46 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
     );
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  Future<void> _sendMessage() async {
+  final userMessage = _messageController.text.trim();
+  if (userMessage.isEmpty || _isBotTyping) return;
+
+  setState(() {
+    _messages.add(ChatMessage(text: userMessage, isUser: true));
+    _messageController.clear();
+    _isBotTyping = true;
+  });
+
+  try {
+    final response = await _chatSession.sendMessage(
+      Content.text(userMessage),
+    );
 
     setState(() {
-      _messages.add(ChatMessage(text: _messageController.text, isUser: true));
-      _messageController.clear();
-      _isBotTyping = true;
+      _isBotTyping = false;
+      _messages.add(
+        ChatMessage(
+          text: response.text ?? "Sorry, I could not understand that.",
+          isUser: false,
+        ),
+      );
     });
+  } catch (e, stackTrace) {
+  debugPrint("❌ GEMINI ERROR: $e");
+  debugPrint("STACK: $stackTrace");
 
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _isBotTyping = false;
-        _messages.add(ChatMessage(text: _getBotResponse(), isUser: false));
-      });
-    });
-  }
+  setState(() {
+    _isBotTyping = false;
+    _messages.add(
+      ChatMessage(
+        text: "Error: $e",
+        isUser: false,
+      ),
+    );
+  });
+}
+}
 
-  String _getBotResponse() {
-    List<String> responses = [
-      "That's great! Keep taking care of your cat 🐱",
-      "Is there anything else you'd like to know?",
-      "Remember vet checkups!",
-      "Ensure your cat drinks water!",
-      "Play with your cat daily!",
-    ];
-    return responses[DateTime.now().millisecond % responses.length];
-  }
 
   Future<void> _signOut() async {
     await FirebaseAuth.instance.signOut();
