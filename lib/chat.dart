@@ -11,6 +11,7 @@ import 'login.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'profile_data_service.dart';
 
 class Chat extends StatefulWidget {
   const Chat({super.key});
@@ -21,12 +22,15 @@ class Chat extends StatefulWidget {
 
 class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
   int _currentIndex = 3;
+  final ProfileDataService _profileDataService = ProfileDataService();
 
   late String apiKey;
 
   bool _isBotTyping = false;
   final TextEditingController _messageController = TextEditingController();
   List<ChatMessage> _messages = [];
+  ChatFlowStep _flowStep = ChatFlowStep.none;
+  final Map<String, String> _flowAnswers = <String, String>{};
 
   late AnimationController _controller;
   late Animation<Offset> _animation;
@@ -63,7 +67,7 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
         text:
             "Hello! I am Dr. Meow.\n"
             "Feel free to ask me anything about your cat health.\n"
-            "Send me photo and I will analyze it.",
+            "You can also choose: Register Cat, Add Care Log, Consult, Tips, or Stress Analysis.",
         isUser: false,
       ),
     );
@@ -90,7 +94,7 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
-  Future<void> _sendMessage() async {
+  Future<void> _handleSendPressed() async {
     final userMessage = _messageController.text.trim();
 
     if (userMessage.isEmpty || _isBotTyping) return;
@@ -98,6 +102,321 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
     setState(() {
       _messages.add(ChatMessage(text: userMessage, isUser: true));
       _messageController.clear();
+    });
+
+    await _handleUserInput(userMessage);
+  }
+
+  Future<void> _handleUserInput(String userMessage) async {
+    if (_flowStep != ChatFlowStep.none) {
+      await _continueFlow(userMessage);
+      return;
+    }
+
+    final normalized = userMessage.toLowerCase();
+    if (normalized.contains('register cat')) {
+      _startRegisterCatFlow();
+      return;
+    }
+    if (normalized.contains('add log') || normalized.contains('care log')) {
+      _startCareLogFlow();
+      return;
+    }
+    if (normalized.contains('consult')) {
+      _startConsultFlow();
+      return;
+    }
+    if (normalized.contains('tips')) {
+      _showTips();
+      return;
+    }
+    if (normalized.contains('stress')) {
+      _startStressAnalysisFlow();
+      return;
+    }
+
+    await _sendToAi();
+  }
+
+  void _addBotMessage(String text) {
+    setState(() {
+      _messages.add(ChatMessage(text: text, isUser: false));
+    });
+  }
+
+  void _startRegisterCatFlow() {
+    _flowAnswers.clear();
+    _flowStep = ChatFlowStep.registerName;
+    _addBotMessage("Let's register your cat. What is your cat's name?");
+  }
+
+  void _startCareLogFlow() {
+    _flowAnswers.clear();
+    _flowStep = ChatFlowStep.careCondition;
+    _addBotMessage("Let's add today's care log. How is their condition today?");
+  }
+
+  void _startConsultFlow() {
+    _flowAnswers.clear();
+    _flowStep = ChatFlowStep.consultPrompt;
+    _addBotMessage(
+      "Sure. Tell me your main concern about your cat, and I will give a quick consult.",
+    );
+  }
+
+  void _showTips() {
+    _addBotMessage(
+      "Quick cat care tips:\n"
+      "1) Keep fresh water available all day.\n"
+      "2) Track appetite, poop, and weight daily.\n"
+      "3) Give 15-20 minutes of active play.\n"
+      "4) Clean litter box daily.\n"
+      "5) See a vet if symptoms last more than 24 hours.",
+    );
+  }
+
+  void _startStressAnalysisFlow() {
+    _flowAnswers.clear();
+    _flowStep = ChatFlowStep.stressActivity;
+    _addBotMessage(
+      "Let's do a stress analysis. How active is your cat today? (high/normal/low)",
+    );
+  }
+
+  Future<void> _continueFlow(String userMessage) async {
+    switch (_flowStep) {
+      case ChatFlowStep.registerName:
+        _flowAnswers['name'] = userMessage;
+        _flowStep = ChatFlowStep.registerBreed;
+        _addBotMessage("Great. What is their breed?");
+        break;
+      case ChatFlowStep.registerBreed:
+        _flowAnswers['breed'] = userMessage;
+        _flowStep = ChatFlowStep.registerAge;
+        _addBotMessage("How old is your cat?");
+        break;
+      case ChatFlowStep.registerAge:
+        _flowAnswers['age'] = userMessage;
+        _flowStep = ChatFlowStep.registerGender;
+        _addBotMessage("What is their gender?");
+        break;
+      case ChatFlowStep.registerGender:
+        _flowAnswers['gender'] = userMessage;
+        _flowStep = ChatFlowStep.registerWeight;
+        _addBotMessage("What is their current weight in kg?");
+        break;
+      case ChatFlowStep.registerWeight:
+        _flowAnswers['weight'] = userMessage;
+        await _saveCatRegistration();
+        break;
+      case ChatFlowStep.careCondition:
+        _flowAnswers['condition'] = userMessage;
+        _flowStep = ChatFlowStep.careAppetite;
+        _addBotMessage("How about appetite?");
+        break;
+      case ChatFlowStep.careAppetite:
+        _flowAnswers['appetite'] = userMessage;
+        _flowStep = ChatFlowStep.careDefecation;
+        _addBotMessage("How about defecation?");
+        break;
+      case ChatFlowStep.careDefecation:
+        _flowAnswers['defecation'] = userMessage;
+        _flowStep = ChatFlowStep.careWeight;
+        _addBotMessage("What is their weight today in kg?");
+        break;
+      case ChatFlowStep.careWeight:
+        _flowAnswers['weightKg'] = userMessage;
+        await _saveCareLog();
+        break;
+      case ChatFlowStep.consultPrompt:
+        await _handleConsult(userMessage);
+        break;
+      case ChatFlowStep.stressActivity:
+        _flowAnswers['stressActivity'] = userMessage;
+        _flowStep = ChatFlowStep.stressHiding;
+        _addBotMessage("Are they hiding more than usual? (yes/no)");
+        break;
+      case ChatFlowStep.stressHiding:
+        _flowAnswers['stressHiding'] = userMessage;
+        _flowStep = ChatFlowStep.stressVocal;
+        _addBotMessage("How is vocalization today? (normal/more/less)");
+        break;
+      case ChatFlowStep.stressVocal:
+        _flowAnswers['stressVocal'] = userMessage;
+        _flowStep = ChatFlowStep.stressAggression;
+        _addBotMessage("Any aggression or irritability? (none/mild/high)");
+        break;
+      case ChatFlowStep.stressAggression:
+        _flowAnswers['stressAggression'] = userMessage;
+        _flowStep = ChatFlowStep.stressAppetite;
+        _addBotMessage("How is appetite today? (good/normal/reduced/none)");
+        break;
+      case ChatFlowStep.stressAppetite:
+        _flowAnswers['stressAppetite'] = userMessage;
+        await _saveStressAnalysis();
+        break;
+      case ChatFlowStep.none:
+        break;
+    }
+  }
+
+  Future<void> _handleConsult(String concern) async {
+    setState(() {
+      _isBotTyping = true;
+    });
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "model": "llama-3.3-70b-versatile",
+          "messages": [
+            {
+              "role": "system",
+              "content":
+                  "You are Dr. Meow. Give short, practical cat consult advice based on symptoms. If emergency signs exist, advise immediate vet visit."
+            },
+            {"role": "user", "content": concern}
+          ],
+          "temperature": 0.5,
+          "max_tokens": 250
+        }),
+      );
+      final data = jsonDecode(response.body);
+      final reply =
+          data['choices']?[0]?['message']?['content'] ??
+          "I couldn't consult right now.";
+      _addBotMessage(reply);
+    } catch (_) {
+      _addBotMessage("I couldn't consult right now. Please try again.");
+    } finally {
+      setState(() {
+        _isBotTyping = false;
+      });
+      _flowAnswers.clear();
+      _flowStep = ChatFlowStep.none;
+    }
+  }
+
+  int _scoreFromAnswer(String answer, Map<String, int> map, int fallback) {
+    final value = map[answer.trim().toLowerCase()];
+    return value ?? fallback;
+  }
+
+  Future<void> _saveStressAnalysis() async {
+    final activity = _scoreFromAnswer(
+      _flowAnswers['stressActivity'] ?? '',
+      {'high': 0, 'normal': 1, 'low': 3},
+      1,
+    );
+    final hiding = _scoreFromAnswer(
+      _flowAnswers['stressHiding'] ?? '',
+      {'no': 0, 'yes': 3},
+      1,
+    );
+    final vocal = _scoreFromAnswer(
+      _flowAnswers['stressVocal'] ?? '',
+      {'normal': 0, 'more': 2, 'less': 1},
+      1,
+    );
+    final aggression = _scoreFromAnswer(
+      _flowAnswers['stressAggression'] ?? '',
+      {'none': 0, 'mild': 2, 'high': 4},
+      1,
+    );
+    final appetite = _scoreFromAnswer(
+      _flowAnswers['stressAppetite'] ?? '',
+      {'good': 0, 'normal': 0, 'reduced': 2, 'none': 4},
+      1,
+    );
+
+    final stressScore = (activity + hiding + vocal + aggression + appetite)
+        .clamp(0, 10);
+    final level = stressScore <= 3
+        ? "Low"
+        : stressScore <= 6
+            ? "Moderate"
+            : "High";
+
+    try {
+      await _profileDataService.addStressLog(
+        stressScore: stressScore,
+        level: level,
+        answers: <String, String>{
+          'activity': _flowAnswers['stressActivity'] ?? '',
+          'hiding': _flowAnswers['stressHiding'] ?? '',
+          'vocalization': _flowAnswers['stressVocal'] ?? '',
+          'aggression': _flowAnswers['stressAggression'] ?? '',
+          'appetite': _flowAnswers['stressAppetite'] ?? '',
+        },
+      );
+      _addBotMessage(
+        "Stress analysis complete.\n"
+        "Stress Score: $stressScore/10 ($level)\n"
+        "Recorded in logs for today.\n"
+        "If stress stays moderate/high for more than 1-2 days, please consult a vet.",
+      );
+    } catch (_) {
+      _addBotMessage(
+        "Stress analysis complete.\n"
+        "Stress Score: $stressScore/10 ($level)\n"
+        "I couldn't save it to logs right now. Please try again.",
+      );
+    } finally {
+      _flowAnswers.clear();
+      _flowStep = ChatFlowStep.none;
+    }
+  }
+
+  Future<void> _saveCatRegistration() async {
+    try {
+      await _profileDataService.updatePet(
+        name: _flowAnswers['name'] ?? '',
+        breed: _flowAnswers['breed'] ?? '',
+        age: _flowAnswers['age'] ?? '',
+        gender: _flowAnswers['gender'] ?? '',
+        weight: _flowAnswers['weight'] ?? '',
+      );
+      _addBotMessage("Done. Your cat is registered successfully.");
+    } catch (_) {
+      _addBotMessage("I couldn't save your cat right now. Please try again.");
+    } finally {
+      _flowAnswers.clear();
+      _flowStep = ChatFlowStep.none;
+    }
+  }
+
+  Future<void> _saveCareLog() async {
+    final parsedWeight = double.tryParse(
+      (_flowAnswers['weightKg'] ?? '').replaceAll(',', '.'),
+    );
+    if (parsedWeight == null) {
+      _addBotMessage("Please enter a valid weight in kg (example: 4.2).");
+      _flowStep = ChatFlowStep.careWeight;
+      return;
+    }
+
+    try {
+      await _profileDataService.addCareLog(
+        condition: _flowAnswers['condition'] ?? '',
+        appetite: _flowAnswers['appetite'] ?? '',
+        defecation: _flowAnswers['defecation'] ?? '',
+        weightKg: parsedWeight,
+      );
+      _addBotMessage("Care log is recorded.");
+    } catch (_) {
+      _addBotMessage("I couldn't save the care log right now. Please try again.");
+    } finally {
+      _flowAnswers.clear();
+      _flowStep = ChatFlowStep.none;
+    }
+  }
+
+  Future<void> _sendToAi() async {
+    setState(() {
       _isBotTyping = true;
     });
 
@@ -336,23 +655,99 @@ Keep answers short, friendly, and easy to understand.
         color: AppColors.surface,
         border: Border(top: BorderSide(color: Colors.black12)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          IconButton(
-            icon: const Icon(Icons.camera_alt),
-            onPressed: () {},
-          ),
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: const InputDecoration(
-                hintText: "Type a message...",
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ActionChip(
+                label: const Text("Register Cat"),
+                onPressed: _isBotTyping
+                    ? null
+                    : () {
+                        setState(() {
+                          _messages.add(
+                            ChatMessage(text: "Register Cat", isUser: true),
+                          );
+                        });
+                        _startRegisterCatFlow();
+                      },
               ),
-            ),
+              ActionChip(
+                label: const Text("Add Care Log"),
+                onPressed: _isBotTyping
+                    ? null
+                    : () {
+                        setState(() {
+                          _messages.add(
+                            ChatMessage(text: "Add Care Log", isUser: true),
+                          );
+                        });
+                        _startCareLogFlow();
+                      },
+              ),
+              ActionChip(
+                label: const Text("Consult"),
+                onPressed: _isBotTyping
+                    ? null
+                    : () {
+                        setState(() {
+                          _messages.add(
+                            ChatMessage(text: "Consult", isUser: true),
+                          );
+                        });
+                        _startConsultFlow();
+                      },
+              ),
+              ActionChip(
+                label: const Text("Tips"),
+                onPressed: _isBotTyping
+                    ? null
+                    : () {
+                        setState(() {
+                          _messages.add(
+                            ChatMessage(text: "Tips", isUser: true),
+                          );
+                        });
+                        _showTips();
+                      },
+              ),
+              ActionChip(
+                label: const Text("Stress Analysis"),
+                onPressed: _isBotTyping
+                    ? null
+                    : () {
+                        setState(() {
+                          _messages.add(
+                            ChatMessage(text: "Stress Analysis", isUser: true),
+                          );
+                        });
+                        _startStressAnalysisFlow();
+                      },
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: _sendMessage,
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.camera_alt),
+                onPressed: () {},
+              ),
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  decoration: const InputDecoration(
+                    hintText: "Type a message...",
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.send),
+                onPressed: _handleSendPressed,
+              ),
+            ],
           ),
         ],
       ),
@@ -512,4 +907,23 @@ class ChatMessage {
     required this.text,
     required this.isUser,
   });
+}
+
+enum ChatFlowStep {
+  none,
+  registerName,
+  registerBreed,
+  registerAge,
+  registerGender,
+  registerWeight,
+  careCondition,
+  careAppetite,
+  careDefecation,
+  careWeight,
+  consultPrompt,
+  stressActivity,
+  stressHiding,
+  stressVocal,
+  stressAggression,
+  stressAppetite,
 }

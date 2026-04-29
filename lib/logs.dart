@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import "chat.dart";
 import "profile.dart";
@@ -8,6 +9,7 @@ import "vet.dart";
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'login.dart';
+import 'profile_data_service.dart';
 
 class Logs extends StatefulWidget {
   const Logs({super.key});
@@ -18,9 +20,8 @@ class Logs extends StatefulWidget {
 class _LogsState extends State<Logs> with TickerProviderStateMixin {
   late AnimationController _healthController;
   late AnimationController _stressController;
-
-  late Animation<Offset> _healthSlide;
-  late Animation<Offset> _stressSlide;
+  final ProfileDataService _profileDataService = ProfileDataService();
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
@@ -35,16 +36,6 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-
-    _healthSlide = Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
-        .animate(
-          CurvedAnimation(parent: _healthController, curve: Curves.easeOut),
-        );
-
-    _stressSlide = Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
-        .animate(
-          CurvedAnimation(parent: _stressController, curve: Curves.easeOut),
-        );
 
     // Start animations
     _healthController.forward();
@@ -211,7 +202,28 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
     );
   }
 
+  String _dateKey(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
+  DateTime _startOfMonth(DateTime date) => DateTime(date.year, date.month, 1);
+
+  int _daysInMonth(DateTime date) {
+    final beginningNextMonth = (date.month < 12)
+        ? DateTime(date.year, date.month + 1, 1)
+        : DateTime(date.year + 1, 1, 1);
+    return beginningNextMonth.subtract(const Duration(days: 1)).day;
+  }
+
   Widget _buildCalendarSection() {
+    final days = _daysInMonth(_selectedDate);
+    final firstWeekday = _startOfMonth(_selectedDate).weekday;
+    final leadingEmptyDays = firstWeekday - 1;
+    final totalCells = leadingEmptyDays + days;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -222,8 +234,8 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
         ),
         child: Column(
           children: [
-            const Text(
-              "2/2026",
+            Text(
+              "${_selectedDate.month}/${_selectedDate.year}",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -234,13 +246,24 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: 28,
+              itemCount: totalCells,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
               ),
               itemBuilder: (context, index) {
+                if (index < leadingEmptyDays) {
+                  return const SizedBox.shrink();
+                }
+                final day = index - leadingEmptyDays + 1;
+                final cellDate = DateTime(
+                  _selectedDate.year,
+                  _selectedDate.month,
+                  day,
+                );
+                final selected =
+                    _dateKey(cellDate) == _dateKey(_selectedDate);
                 ValueNotifier<bool> isHovered = ValueNotifier(false);
 
                 return MouseRegion(
@@ -252,18 +275,27 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
                       return AnimatedScale(
                         scale: hovered ? 1.2 : 1.0,
                         duration: const Duration(milliseconds: 200),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          decoration: BoxDecoration(
-                            color: hovered
-                                ? AppColors.primaryDark
-                                : AppColors.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            "${index + 1}",
-                            style: const TextStyle(color: Colors.white),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedDate = cellDate;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppColors.primaryDark
+                                  : hovered
+                                      ? AppColors.primaryDark
+                                      : AppColors.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              "$day",
+                              style: const TextStyle(color: Colors.white),
+                            ),
                           ),
                         ),
                       );
@@ -281,111 +313,171 @@ class _LogsState extends State<Logs> with TickerProviderStateMixin {
   Widget _buildConcernCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.secondaryDark,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "😿 Concern",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Score: 50     Health: 5/10     Stress: 5/10",
-              style: TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 10),
+      child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: _profileDataService.profileStream(),
+        builder: (context, snapshot) {
+          final profileData = snapshot.data?.data() ?? <String, dynamic>{};
+          final careLog = _profileDataService.careLogForDate(
+            profileData,
+            _selectedDate,
+          );
+          final stressLog = _profileDataService.stressLogForDate(
+            profileData,
+            _selectedDate,
+          );
+          final healthScore = (careLog?['healthScore'] as num?)?.toInt() ?? 0;
+          final stressScore = ((stressLog?['stressScore'] as num?)?.toInt() ??
+                  (10 - healthScore))
+              .clamp(0, 10);
+          final stressLevel = stressLog?['level']?.toString();
 
-            const Text("Health", style: TextStyle(color: Colors.white)),
-            const SizedBox(height: 5),
-
-            AnimatedBuilder(
-              animation: _healthController,
-              builder: (context, child) {
-                return LinearProgressIndicator(
-                  value: _healthController.value * 0.5, // animates from 0 → 0.5
-                  backgroundColor: AppColors.surface,
-                  color: AppColors.primarySoft,
-                );
-              },
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.secondaryDark,
+              borderRadius: BorderRadius.circular(20),
             ),
-
-            const SizedBox(height: 10),
-
-            const Text("Stress", style: TextStyle(color: Colors.white)),
-            const SizedBox(height: 5),
-            AnimatedBuilder(
-              animation: _stressController,
-              builder: (context, child) {
-                return LinearProgressIndicator(
-                  value: _stressController.value * 0.5,
-                  backgroundColor: AppColors.surface,
-                  color: AppColors.primarySoft,
-                );
-              },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "😿 Concern",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Score: ${healthScore * 10}     Health: $healthScore/10     Stress: $stressScore/10",
+                  style: const TextStyle(color: Colors.white),
+                ),
+                if (stressLevel != null && stressLevel.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      "Stress Level: $stressLevel",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                const Text("Health", style: TextStyle(color: Colors.white)),
+                const SizedBox(height: 5),
+                AnimatedBuilder(
+                  animation: _healthController,
+                  builder: (context, child) {
+                    return LinearProgressIndicator(
+                      value: _healthController.value * (healthScore / 10),
+                      backgroundColor: AppColors.surface,
+                      color: AppColors.primarySoft,
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                const Text("Stress", style: TextStyle(color: Colors.white)),
+                const SizedBox(height: 5),
+                AnimatedBuilder(
+                  animation: _stressController,
+                  builder: (context, child) {
+                    return LinearProgressIndicator(
+                      value: _stressController.value * (stressScore / 10),
+                      backgroundColor: AppColors.surface,
+                      color: AppColors.primarySoft,
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
+  }
+
+  String _titleCase(String value) {
+    if (value.trim().isEmpty) return "-";
+    final normalized = value.trim().toLowerCase();
+    return "${normalized[0].toUpperCase()}${normalized.substring(1)}";
   }
 
   Widget _buildCareLogsCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "📋 Care Logs",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+      child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: _profileDataService.profileStream(),
+        builder: (context, snapshot) {
+          final profileData = snapshot.data?.data() ?? <String, dynamic>{};
+          final pet = Map<String, dynamic>.from(
+            profileData['pet'] as Map<String, dynamic>? ?? {},
+          );
+          final petName = (pet['name'] as String?)?.trim().isNotEmpty == true
+              ? pet['name'] as String
+              : "Your Cat";
+          final careLog = _profileDataService.careLogForDate(
+            profileData,
+            _selectedDate,
+          );
+
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(20),
             ),
-            const SizedBox(height: 15),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "🐱 Mimi  7/10",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "📋 Care Logs (${_dateKey(_selectedDate)})",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  SizedBox(height: 10),
-                  Text("Condition: Good 🙂     Appetite: Great 😋"),
-                  SizedBox(height: 5),
-                  Text("Bowl: Diarrhea 💩     Urination: More than Usual 🚿"),
-                  SizedBox(height: 5),
-                  Text("Weight: 2.5 kg"),
-                ],
-              ),
+                ),
+                const SizedBox(height: 15),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: careLog == null
+                      ? const Text("No care log recorded for this date yet.")
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "🐱 $petName  ${(careLog['healthScore'] ?? 0)}/10",
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              "Condition: ${_titleCase(careLog['condition']?.toString() ?? '')}",
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              "Appetite: ${_titleCase(careLog['appetite']?.toString() ?? '')}",
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              "Defecation: ${_titleCase(careLog['defecation']?.toString() ?? '')}",
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              "Weight: ${(careLog['weightKg'] as num?)?.toStringAsFixed(1) ?? '-'} kg",
+                            ),
+                          ],
+                        ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

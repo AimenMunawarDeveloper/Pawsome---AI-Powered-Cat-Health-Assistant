@@ -364,4 +364,149 @@ class ProfileDataService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
+
+  String _dateKey(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
+  int calculateCareHealthScore({
+    required String condition,
+    required String appetite,
+    required String defecation,
+    required double weightKg,
+  }) {
+    const conditionScores = <String, int>{
+      'excellent': 10,
+      'good': 8,
+      'okay': 6,
+      'poor': 3,
+    };
+    const appetiteScores = <String, int>{
+      'great': 10,
+      'normal': 8,
+      'reduced': 5,
+      'none': 2,
+    };
+    const defecationScores = <String, int>{
+      'normal': 10,
+      'soft': 7,
+      'diarrhea': 3,
+      'constipation': 4,
+    };
+
+    final conditionScore =
+        conditionScores[condition.trim().toLowerCase()] ?? 6;
+    final appetiteScore = appetiteScores[appetite.trim().toLowerCase()] ?? 6;
+    final defecationScore =
+        defecationScores[defecation.trim().toLowerCase()] ?? 6;
+
+    int weightScore = 8;
+    if (weightKg <= 0) {
+      weightScore = 2;
+    } else if (weightKg < 2.0 || weightKg > 8.0) {
+      weightScore = 5;
+    }
+
+    final average =
+        (conditionScore + appetiteScore + defecationScore + weightScore) / 4;
+    return average.round().clamp(1, 10);
+  }
+
+  Future<void> addCareLog({
+    required String condition,
+    required String appetite,
+    required String defecation,
+    required double weightKg,
+    DateTime? date,
+  }) async {
+    final now = DateTime.now();
+    final targetDate = date ?? now;
+    final dateKey = _dateKey(targetDate);
+    final score = calculateCareHealthScore(
+      condition: condition,
+      appetite: appetite,
+      defecation: defecation,
+      weightKg: weightKg,
+    );
+
+    await _profileDoc.set({
+      'logs': {
+        'careLogs': {
+          dateKey: {
+            'condition': condition,
+            'appetite': appetite,
+            'defecation': defecation,
+            'weightKg': weightKg,
+            'healthScore': score,
+            'recordedAt': FieldValue.serverTimestamp(),
+          },
+        },
+      },
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> addStressLog({
+    required int stressScore,
+    required String level,
+    required Map<String, String> answers,
+    DateTime? date,
+  }) async {
+    final targetDate = date ?? DateTime.now();
+    final dateKey = _dateKey(targetDate);
+    final clampedScore = stressScore.clamp(0, 10);
+
+    await _profileDoc.set({
+      'logs': {
+        'stressLogs': {
+          dateKey: {
+            'stressScore': clampedScore,
+            'level': level,
+            'answers': answers,
+            'recordedAt': FieldValue.serverTimestamp(),
+          },
+        },
+      },
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Map<String, dynamic>? careLogForDate(
+    Map<String, dynamic> profileData,
+    DateTime date,
+  ) {
+    final logs = Map<String, dynamic>.from(
+      profileData['logs'] as Map<String, dynamic>? ?? {},
+    );
+    final careLogs = Map<String, dynamic>.from(
+      logs['careLogs'] as Map<String, dynamic>? ?? {},
+    );
+    final dateKey = _dateKey(date);
+    final entry = careLogs[dateKey];
+    if (entry is Map) {
+      return Map<String, dynamic>.from(entry);
+    }
+    return null;
+  }
+
+  Map<String, dynamic>? stressLogForDate(
+    Map<String, dynamic> profileData,
+    DateTime date,
+  ) {
+    final logs = Map<String, dynamic>.from(
+      profileData['logs'] as Map<String, dynamic>? ?? {},
+    );
+    final stressLogs = Map<String, dynamic>.from(
+      logs['stressLogs'] as Map<String, dynamic>? ?? {},
+    );
+    final dateKey = _dateKey(date);
+    final entry = stressLogs[dateKey];
+    if (entry is Map) {
+      return Map<String, dynamic>.from(entry);
+    }
+    return null;
+  }
 }
