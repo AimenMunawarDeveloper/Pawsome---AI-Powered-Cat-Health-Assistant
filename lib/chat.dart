@@ -8,8 +8,9 @@ import "vet.dart";
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'login.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Chat extends StatefulWidget {
   const Chat({super.key});
@@ -20,16 +21,16 @@ class Chat extends StatefulWidget {
 
 class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
   int _currentIndex = 3;
- late String apiKey;
 
-late final GenerativeModel _model;
-late final ChatSession _chatSession;
+  late String apiKey;
 
   bool _isBotTyping = false;
   final TextEditingController _messageController = TextEditingController();
   List<ChatMessage> _messages = [];
+
   late AnimationController _controller;
   late Animation<Offset> _animation;
+
   Route _createRoute(Widget page) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => page,
@@ -51,24 +52,12 @@ late final ChatSession _chatSession;
   @override
   void initState() {
     super.initState();
-    apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
-    debugPrint("API KEY LOADED: ${apiKey.isNotEmpty}");
-  debugPrint("API KEY LENGTH: ${apiKey.length}");
-    _model = GenerativeModel(
-  model: 'gemini-2.5-pro',
-  apiKey: apiKey,
-  systemInstruction: Content.text(
-    '''
-You are Dr. Meow, a friendly AI cat health assistant.
-Only answer questions related to cats, pets, pet care, symptoms, food, grooming, and vet guidance.
-Do not diagnose serious conditions with certainty.
-For emergencies, tell the user to visit a vet immediately.
-Keep answers short, friendly, and easy to understand.
-''',
-  ),
-);
 
-_chatSession = _model.startChat();
+    apiKey = dotenv.env['GROQ_API_KEY'] ?? '';
+
+    debugPrint("GROQ KEY LOADED: ${apiKey.isNotEmpty}");
+    debugPrint("KEY LENGTH: ${apiKey.length}");
+
     _messages.add(
       ChatMessage(
         text:
@@ -78,6 +67,7 @@ _chatSession = _model.startChat();
         isUser: false,
       ),
     );
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
@@ -86,7 +76,9 @@ _chatSession = _model.startChat();
     _animation = Tween<Offset>(
       begin: const Offset(-1, 0),
       end: const Offset(1, 0),
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.linear),
+    );
 
     _controller.repeat(reverse: true);
   }
@@ -96,6 +88,91 @@ _chatSession = _model.startChat();
     _controller.dispose();
     _messageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendMessage() async {
+    final userMessage = _messageController.text.trim();
+
+    if (userMessage.isEmpty || _isBotTyping) return;
+
+    setState(() {
+      _messages.add(ChatMessage(text: userMessage, isUser: true));
+      _messageController.clear();
+      _isBotTyping = true;
+    });
+
+    try {
+      List<Map<String, String>> chatHistory = [
+        {
+          "role": "system",
+          "content": """
+You are Dr. Meow, a friendly AI cat health assistant.
+Only answer questions related to cats, pets, pet care, symptoms, food, grooming, and vet guidance.
+Do not diagnose serious conditions with certainty.
+For emergencies, tell the user to visit a vet immediately.
+Keep answers short, friendly, and easy to understand.
+"""
+        }
+      ];
+
+      for (var msg in _messages) {
+        chatHistory.add({
+          "role": msg.isUser ? "user" : "assistant",
+          "content": msg.text,
+        });
+      }
+
+      final response = await http.post(
+        Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "model": "llama-3.3-70b-versatile",
+          "messages": chatHistory,
+          "temperature": 0.7,
+          "max_tokens": 500
+        }),
+      );
+
+      debugPrint("FULL RESPONSE: ${response.body}");
+
+      final data = jsonDecode(response.body);
+
+      final botReply =
+          data['choices']?[0]?['message']?['content'] ??
+          "Sorry, I couldn't understand.";
+
+      setState(() {
+        _messages.add(ChatMessage(text: botReply, isUser: false));
+        _isBotTyping = false;
+      });
+    } catch (e) {
+      debugPrint("ERROR: $e");
+
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            text: "Server error. Please try again later.",
+            isUser: false,
+          ),
+        );
+        _isBotTyping = false;
+      });
+    }
+  }
+
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const Login()),
+      (route) => false,
+    );
   }
 
   @override
@@ -135,19 +212,16 @@ _chatSession = _model.startChat();
                         },
                       ),
                     ),
-
                     AnimatedOpacity(
                       opacity: _isBotTyping ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 300),
                       child: _buildTypingIndicator(),
                     ),
-
                     const SizedBox(height: 10),
                   ],
                 ),
               ),
             ),
-
             AnimatedOpacity(
               opacity: _isBotTyping ? 0.5 : 1.0,
               duration: const Duration(milliseconds: 300),
@@ -178,7 +252,7 @@ _chatSession = _model.startChat();
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
           decoration: BoxDecoration(
-          color: AppColors.surface,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: Colors.black12),
           ),
@@ -238,7 +312,9 @@ _chatSession = _model.startChat();
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: message.isUser ? AppColors.secondarySoft : AppColors.surface,
+                color: message.isUser
+                    ? AppColors.secondarySoft
+                    : AppColors.surface,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: Colors.black12),
               ),
@@ -262,67 +338,24 @@ _chatSession = _model.startChat();
       ),
       child: Row(
         children: [
-          IconButton(icon: const Icon(Icons.camera_alt), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.camera_alt),
+            onPressed: () {},
+          ),
           Expanded(
             child: TextField(
               controller: _messageController,
-              decoration: const InputDecoration(hintText: "Type a message..."),
+              decoration: const InputDecoration(
+                hintText: "Type a message...",
+              ),
             ),
           ),
-          IconButton(icon: const Icon(Icons.send), onPressed: _sendMessage),
+          IconButton(
+            icon: const Icon(Icons.send),
+            onPressed: _sendMessage,
+          ),
         ],
       ),
-    );
-  }
-
-  Future<void> _sendMessage() async {
-  final userMessage = _messageController.text.trim();
-  if (userMessage.isEmpty || _isBotTyping) return;
-
-  setState(() {
-    _messages.add(ChatMessage(text: userMessage, isUser: true));
-    _messageController.clear();
-    _isBotTyping = true;
-  });
-
-  try {
-    final response = await _chatSession.sendMessage(
-      Content.text(userMessage),
-    );
-
-    setState(() {
-      _isBotTyping = false;
-      _messages.add(
-        ChatMessage(
-          text: response.text ?? "Sorry, I could not understand that.",
-          isUser: false,
-        ),
-      );
-    });
-  } catch (e, stackTrace) {
-  debugPrint("❌ GEMINI ERROR: $e");
-  debugPrint("STACK: $stackTrace");
-
-  setState(() {
-    _isBotTyping = false;
-    _messages.add(
-      ChatMessage(
-        text: "Error: $e",
-        isUser: false,
-      ),
-    );
-  });
-}
-}
-
-
-  Future<void> _signOut() async {
-    await FirebaseAuth.instance.signOut();
-    if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const Login()),
-      (route) => false,
     );
   }
 
@@ -356,11 +389,12 @@ _chatSession = _model.startChat();
           ),
           Row(
             children: [
-              const Icon(Icons.notifications_none, color: AppColors.surface),
+              const Icon(Icons.notifications_none,
+                  color: AppColors.surface),
               IconButton(
                 onPressed: _signOut,
-                icon: const Icon(Icons.logout, color: AppColors.surface),
-                tooltip: 'Sign out',
+                icon: const Icon(Icons.logout,
+                    color: AppColors.surface),
               ),
             ],
           ),
@@ -377,47 +411,24 @@ _chatSession = _model.startChat();
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: Column(
             children: [
-              _drawerItem(Icons.home, "Home", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Home()),
-                );
-              }),
-
-              _drawerItem(Icons.list_alt, "Logs", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Logs()),
-                );
-              }),
-
-              _drawerItem(Icons.favorite, "Health", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Health()),
-                );
-              }),
-
-              _drawerItem(Icons.auto_awesome, "AI Chat", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Chat()),
-                );
-              }),
-
-              _drawerItem(Icons.location_on, "Vet Locator", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Vet()),
-                );
-              }),
-
-              _drawerItem(Icons.person, "Profile", () {
-                Navigator.pushReplacement(
-                  context,
-                  _createRoute(const Profile()),
-                );
-              }),
+              _drawerItem(Icons.home, "Home",
+                  () => Navigator.pushReplacement(
+                      context, _createRoute(const Home()))),
+              _drawerItem(Icons.list_alt, "Logs",
+                  () => Navigator.pushReplacement(
+                      context, _createRoute(const Logs()))),
+              _drawerItem(Icons.favorite, "Health",
+                  () => Navigator.pushReplacement(
+                      context, _createRoute(const Health()))),
+              _drawerItem(Icons.auto_awesome, "AI Chat",
+                  () => Navigator.pushReplacement(
+                      context, _createRoute(const Chat()))),
+              _drawerItem(Icons.location_on, "Vet Locator",
+                  () => Navigator.pushReplacement(
+                      context, _createRoute(const Vet()))),
+              _drawerItem(Icons.person, "Profile",
+                  () => Navigator.pushReplacement(
+                      context, _createRoute(const Profile()))),
             ],
           ),
         ),
@@ -425,14 +436,17 @@ _chatSession = _model.startChat();
     );
   }
 
-  Widget _drawerItem(IconData icon, String title, VoidCallback onTap) {
+  Widget _drawerItem(
+      IconData icon, String title, VoidCallback onTap) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+          horizontal: 20, vertical: 8),
       child: ListTile(
         leading: Icon(icon, color: Colors.black87),
         title: Text(
           title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.w500),
         ),
         onTap: onTap,
       ),
@@ -449,48 +463,42 @@ _chatSession = _model.startChat();
       onTap: (index) {
         if (index == 0) {
           Navigator.pushReplacement(
-            context,
-            _createRoute(const Home()),
-          );
+              context, _createRoute(const Home()));
         }
         if (index == 1) {
           Navigator.pushReplacement(
-            context,
-           _createRoute(const Logs()),
-          );
+              context, _createRoute(const Logs()));
         }
         if (index == 2) {
           Navigator.pushReplacement(
-            context,
-            _createRoute(const Health()),
-          );
+              context, _createRoute(const Health()));
         }
         if (index == 3) {
           Navigator.pushReplacement(
-            context,
-            _createRoute(const Chat()),
-          );
+              context, _createRoute(const Chat()));
         }
         if (index == 4) {
           Navigator.pushReplacement(
-            context,
-            _createRoute(const Vet()),
-          );
+              context, _createRoute(const Vet()));
         }
         if (index == 5) {
           Navigator.pushReplacement(
-            context,
-            _createRoute(const Profile()),
-          );
+              context, _createRoute(const Profile()));
         }
       },
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.list), label: "Logs"),
-        BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Health"),
-        BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
-        BottomNavigationBarItem(icon: Icon(Icons.location_city), label: "Vet"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.home), label: "Home"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.list), label: "Logs"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.favorite), label: "Health"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.chat), label: "Chat"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.location_city), label: "Vet"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.person), label: "Profile"),
       ],
     );
   }
@@ -500,5 +508,8 @@ class ChatMessage {
   final String text;
   final bool isUser;
 
-  ChatMessage({required this.text, required this.isUser});
+  ChatMessage({
+    required this.text,
+    required this.isUser,
+  });
 }
