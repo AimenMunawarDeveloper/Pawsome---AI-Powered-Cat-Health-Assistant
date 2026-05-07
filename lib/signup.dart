@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pawsome/loading.dart';
 
 import 'app_colors.dart';
+import 'onboarding.dart';
 import 'profile_data_service.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -55,7 +56,7 @@ class _SignUpPageState extends State<SignUpPage> {
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const LoadingScreen()),
+        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
         (route) => false,
       );
     } on FirebaseAuthException catch (e) {
