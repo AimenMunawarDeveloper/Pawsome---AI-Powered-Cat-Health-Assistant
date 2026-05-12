@@ -54,7 +54,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-/android/app/build
 
 # iOS/macOS
 **/Pods/
@@ -64,5 +63,3 @@ app.*.map.json
 **/Flutter/Flutter.podspec
 
 .env
-
-

@@ -57,7 +57,7 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    apiKey = (dotenv.env['GROQ_API_KEY'] ?? '').trim();
+    apiKey = dotenv.env['GROQ_API_KEY'] ?? '';
 
     debugPrint("GROQ KEY LOADED: ${apiKey.isNotEmpty}");
     debugPrint("KEY LENGTH: ${apiKey.length}");
@@ -264,49 +264,30 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
     setState(() {
       _isBotTyping = true;
     });
-    if (apiKey.isEmpty) {
-      _addBotMessage(
-        "Chat API key is missing. Add GROQ_API_KEY to your .env file and rebuild the app.",
-      );
-      setState(() => _isBotTyping = false);
-      _flowAnswers.clear();
-      _flowStep = ChatFlowStep.none;
-      return;
-    }
     try {
-      final response = await http
-          .post(
-            Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
-            headers: {
-              'Authorization': 'Bearer $apiKey',
-              'Content-Type': 'application/json',
-              'User-Agent': 'Pawsome/1.0 (Flutter)',
+      final response = await http.post(
+        Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "model": "llama-3.3-70b-versatile",
+          "messages": [
+            {
+              "role": "system",
+              "content":
+                  "You are Dr. Meow. Give short, practical cat consult advice based on symptoms. If emergency signs exist, advise immediate vet visit."
             },
-            body: jsonEncode({
-              "model": "llama-3.3-70b-versatile",
-              "messages": [
-                {
-                  "role": "system",
-                  "content":
-                      "You are Dr. Meow. Give short, practical cat consult advice based on symptoms. If emergency signs exist, advise immediate vet visit."
-                },
-                {"role": "user", "content": concern}
-              ],
-              "temperature": 0.5,
-              "max_tokens": 250
-            }),
-          )
-          .timeout(const Duration(seconds: 60));
-
-      if (response.statusCode != 200) {
-        final err = _groqErrorMessage(response.body);
-        _addBotMessage(err ?? "I couldn't consult right now. Please try again.");
-        return;
-      }
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
+            {"role": "user", "content": concern}
+          ],
+          "temperature": 0.5,
+          "max_tokens": 250
+        }),
+      );
+      final data = jsonDecode(response.body);
       final reply =
-          data['choices']?[0]?['message']?['content'] as String? ??
+          data['choices']?[0]?['message']?['content'] ??
           "I couldn't consult right now.";
       _addBotMessage(reply);
     } catch (_) {
@@ -439,20 +420,6 @@ class _ChatState extends State<Chat> with SingleTickerProviderStateMixin {
       _isBotTyping = true;
     });
 
-    if (apiKey.isEmpty) {
-      setState(() {
-        _messages.add(
-          ChatMessage(
-            text:
-                "Chat API key is missing. Add GROQ_API_KEY to your .env file and rebuild the app.",
-            isUser: false,
-          ),
-        );
-        _isBotTyping = false;
-      });
-      return;
-    }
-
     try {
       List<Map<String, String>> chatHistory = [
         {
@@ -474,38 +441,26 @@ Keep answers short, friendly, and easy to understand.
         });
       }
 
-      final response = await http
-          .post(
-            Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
-            headers: {
-              'Authorization': 'Bearer $apiKey',
-              'Content-Type': 'application/json',
-              'User-Agent': 'Pawsome/1.0 (Flutter)',
-            },
-            body: jsonEncode({
-              "model": "llama-3.3-70b-versatile",
-              "messages": chatHistory,
-              "temperature": 0.7,
-              "max_tokens": 500
-            }),
-          )
-          .timeout(const Duration(seconds: 60));
+      final response = await http.post(
+        Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "model": "llama-3.3-70b-versatile",
+          "messages": chatHistory,
+          "temperature": 0.7,
+          "max_tokens": 500
+        }),
+      );
 
       debugPrint("FULL RESPONSE: ${response.body}");
 
-      if (response.statusCode != 200) {
-        final err = _groqErrorMessage(response.body) ?? "Server error. Please try again later.";
-        setState(() {
-          _messages.add(ChatMessage(text: err, isUser: false));
-          _isBotTyping = false;
-        });
-        return;
-      }
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = jsonDecode(response.body);
 
       final botReply =
-          data['choices']?[0]?['message']?['content'] as String? ??
+          data['choices']?[0]?['message']?['content'] ??
           "Sorry, I couldn't understand.";
 
       setState(() {
@@ -525,18 +480,6 @@ Keep answers short, friendly, and easy to understand.
         _isBotTyping = false;
       });
     }
-  }
-
-  /// Parses Groq JSON error body when status is not 200.
-  String? _groqErrorMessage(String body) {
-    try {
-      final data = jsonDecode(body) as Map<String, dynamic>;
-      final err = data['error'];
-      if (err is Map && err['message'] != null) {
-        return err['message'].toString();
-      }
-    } catch (_) {}
-    return null;
   }
 
   Future<void> _signOut() async {
