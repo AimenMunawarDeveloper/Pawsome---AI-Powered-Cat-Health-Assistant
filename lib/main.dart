@@ -13,45 +13,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app_firestore.dart';
 
-Future<void> testFirestoreConnection() async {
-  try {
-    final db = appFirestore;
-
-    await db
-        .collection('debug')
-        .doc('connection_test')
-        .set({
-          'message': 'hello',
-          'time': FieldValue.serverTimestamp(),
-        })
-        .timeout(const Duration(seconds: 8));
-
-    final doc = await db
-        .collection('debug')
-        .doc('connection_test')
-        .get()
-        .timeout(const Duration(seconds: 8));
-
-    debugPrint(
-      'Firestore connected. Exists: ${doc.exists}, data: ${doc.data()}',
-    );
-  } on TimeoutException {
-    debugPrint('Firestore test timed out. The app could not reach Firestore.');
-  } catch (e) {
-    debugPrint('Firestore test failed: $e');
-  }
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await dotenv.load(fileName: ".env");
   debugPrint("ENV TEST: ${dotenv.env['GEMINI_API_KEY']}");
   runApp(const MyApp());
-
-  if (kDebugMode) {
-    unawaited(testFirestoreConnection());
-  }
 }
 
 class MyApp extends StatelessWidget {
