@@ -21,76 +21,142 @@ class Vet extends StatefulWidget {
 }
 
 class _VetState extends State<Vet> {
+  /// Same center as [MapOptions.initialCenter] so the search matches the map.
+  static const LatLng _mapCenter = LatLng(33.6844, 73.0479);
+
+  /// Overpass `around:` radius in meters — a fixed bbox missed nearby POIs just
+  /// outside the rectangle (e.g. south of 33.40° while the map is Islamabad).
+  static const int _searchRadiusM = 85000;
+
+  final MapController _mapController = MapController();
+
   List<Map<String, dynamic>> vets = [];
   Map<String, dynamic>? selectedVet;
   bool isLoadingVets = true;
 
   @override
-  void initState() {
-    super.initState();
-    fetchNearbyVets();
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  /// flutter_map can cull markers when [MapCamera.pixelBounds] is not ready yet
+  /// (often seen on Android). A tiny camera nudge after data loads forces a
+  /// correct repaint without visible movement.
+  void _nudgeMapAfterMarkersLoaded() {
+    if (vets.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || vets.isEmpty) return;
+      try {
+        final cam = _mapController.camera;
+        final center = cam.center;
+        final zoom = cam.zoom;
+        if (_mapController.move(center, zoom + 0.001)) {
+          _mapController.move(center, zoom);
+        }
+      } catch (_) {
+        // Map not linked to controller yet; panning the map will still refresh.
+      }
+    });
   }
 
   Future<void> fetchNearbyVets() async {
-    const query = '''
-[out:json][timeout:25];
+    final lat = _mapCenter.latitude;
+    final lon = _mapCenter.longitude;
+    final r = _searchRadiusM;
+    final query = '''
+[out:json][timeout:60];
 (
-  node["amenity"="veterinary"](33.40,72.80,33.90,73.30);
-  way["amenity"="veterinary"](33.40,72.80,33.90,73.30);
-  relation["amenity"="veterinary"](33.40,72.80,33.90,73.30);
-
-  node["healthcare"="veterinary"](33.40,72.80,33.90,73.30);
-  way["healthcare"="veterinary"](33.40,72.80,33.90,73.30);
-  relation["healthcare"="veterinary"](33.40,72.80,33.90,73.30);
-
-  node["name"~"animal|vet|veterinary|pet", i](33.40,72.80,33.90,73.30);
-  way["name"~"animal|vet|veterinary|pet", i](33.40,72.80,33.90,73.30);
-  relation["name"~"animal|vet|veterinary|pet", i](33.40,72.80,33.90,73.30);
+  node["amenity"="veterinary"](around:$r,$lat,$lon);
+  way["amenity"="veterinary"](around:$r,$lat,$lon);
+  relation["amenity"="veterinary"](around:$r,$lat,$lon);
+  node["healthcare"="veterinary"](around:$r,$lat,$lon);
+  way["healthcare"="veterinary"](around:$r,$lat,$lon);
+  relation["healthcare"="veterinary"](around:$r,$lat,$lon);
+  node["name"~"animal|vet|veterinary|pet", i](around:$r,$lat,$lon);
+  way["name"~"animal|vet|veterinary|pet", i](around:$r,$lat,$lon);
+  relation["name"~"animal|vet|veterinary|pet", i](around:$r,$lat,$lon);
 );
 out center;
 ''';
 
-    final url = Uri.parse('https://overpass-api.de/api/interpreter');
+    const endpoints = [
+      'https://overpass.kumi.systems/api/interpreter',
+      'https://overpass.openstreetmap.fr/api/interpreter',
+      'https://overpass-api.de/api/interpreter',
+    ];
 
-    try {
-      final response = await http.post(url, body: {'data': query});
+    final body = 'data=${Uri.encodeQueryComponent(query)}';
+    const headers = {
+      'User-Agent': 'Pawsome/1.0 (Flutter student app; contact via store listing)',
+      'Accept': '*/*',
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    };
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final elements = data['elements'] as List;
+    for (final endpoint in endpoints) {
+      try {
+        final response = await http
+            .post(
+              Uri.parse(endpoint),
+              headers: headers,
+              body: body,
+            )
+            .timeout(const Duration(seconds: 60));
 
+        if (response.statusCode != 200) continue;
+
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final rawElements = data['elements'];
+        if (rawElements is! List) continue;
+
+        final parsed = <Map<String, dynamic>>[];
+        for (final item in rawElements) {
+          if (item is! Map) continue;
+          final m = Map<String, dynamic>.from(item);
+          final tagsRaw = m['tags'];
+          final tags = tagsRaw is Map
+              ? Map<String, dynamic>.from(tagsRaw)
+              : <String, dynamic>{};
+
+          final latRaw = m['lat'] ?? (m['center'] is Map
+              ? (m['center'] as Map)['lat']
+              : null);
+          final lonRaw = m['lon'] ?? (m['center'] is Map
+              ? (m['center'] as Map)['lon']
+              : null);
+          final lat = latRaw is num
+              ? latRaw.toDouble()
+              : double.tryParse(latRaw?.toString() ?? '');
+          final lon = lonRaw is num
+              ? lonRaw.toDouble()
+              : double.tryParse(lonRaw?.toString() ?? '');
+          if (lat == null || lon == null) continue;
+
+          parsed.add({
+            'name': tags['name'] as String? ?? 'Unnamed Vet Clinic',
+            'phone': tags['phone'] as String? ??
+                tags['contact:phone'] as String? ??
+                'No phone available',
+            'location': LatLng(lat, lon),
+          });
+        }
+
+        if (!mounted) return;
         setState(() {
-          vets = elements
-              .map((item) {
-                final tags = item['tags'] ?? {};
-
-                final lat = item['lat'] ?? item['center']?['lat'];
-                final lon = item['lon'] ?? item['center']?['lon'];
-
-                return {
-                  'name': tags['name'] ?? 'Unnamed Vet Clinic',
-                  'phone':
-                      tags['phone'] ??
-                      tags['contact:phone'] ??
-                      'No phone available',
-                  'location': LatLng(lat, lon),
-                };
-              })
-              .where((vet) => vet['location'] != null)
-              .toList();
-
+          vets = parsed;
           isLoadingVets = false;
         });
-      } else {
-        setState(() {
-          isLoadingVets = false;
-        });
+        _nudgeMapAfterMarkersLoaded();
+        return;
+      } catch (_) {
+        continue;
       }
-    } catch (e) {
-      setState(() {
-        isLoadingVets = false;
-      });
     }
+
+    if (!mounted) return;
+    setState(() {
+      isLoadingVets = false;
+    });
   }
 
   Route _createRoute(Widget page) {
@@ -125,9 +191,11 @@ out center;
                 children: [
                   Positioned.fill(
                     child: FlutterMap(
+                      mapController: _mapController,
                       options: MapOptions(
-                        initialCenter: LatLng(33.6844, 73.0479),
+                        initialCenter: _mapCenter,
                         initialZoom: 12.5,
+                        onMapReady: fetchNearbyVets,
                       ),
                       children: [
                         TileLayer(
@@ -136,6 +204,7 @@ out center;
                           userAgentPackageName: 'com.example.pawsome',
                         ),
                         MarkerLayer(
+                          key: ValueKey(vets.length),
                           markers: vets.map((vet) {
                             return Marker(
                               point: vet['location'],
@@ -321,7 +390,7 @@ out center;
       width: 160,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.9),
+        color: color.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -480,7 +549,7 @@ class _HoverCallButtonState extends State<HoverCallButton> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
         decoration: BoxDecoration(
-          color: isHovered ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+          color: isHovered ? Colors.blue.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
